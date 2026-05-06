@@ -1,7 +1,8 @@
 #!/bin/bash
 set -e
 
-INSTALL_DIR="${INSTALL_DIR:-/opt/mlb-statcast-pipeline}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+INSTALL_DIR="$(dirname "$SCRIPT_DIR")"
 VENV_DIR="$INSTALL_DIR/venv"
 LOG_FILE="$INSTALL_DIR/logs/cron.log"
 

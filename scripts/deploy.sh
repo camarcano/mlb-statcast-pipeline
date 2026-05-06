@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# Usage: Run this AFTER cloning the repo manually.
+# Usage: Run this AFTER cloning the repo and creating .env.
 #   bash scripts/deploy.sh
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -39,20 +39,24 @@ pip install --upgrade pip --quiet
 pip install -r "$INSTALL_DIR/requirements.txt" --quiet
 pip install -e "$INSTALL_DIR" --quiet
 
-# 5. Initialize database
+# 5. Ensure data and logs directories exist
+mkdir -p "$INSTALL_DIR/data"
+mkdir -p "$INSTALL_DIR/logs"
+
+# 6. Initialize database
 if [ ! -f "$INSTALL_DIR/data/savant.db" ]; then
     echo "Initializing database..."
     statcast init
     echo ""
     echo "Database created. Run the backfill to load historical data:"
     echo "  source $VENV_DIR/bin/activate"
-    echo "  statcast backfill"
+    echo "  nohup statcast backfill > $INSTALL_DIR/logs/backfill.log 2>&1 &"
 else
     echo "Database already exists. Running update..."
     statcast update --days-back 3
 fi
 
-# 6. Set up cron job
+# 7. Set up cron job
 echo ""
 bash "$INSTALL_DIR/scripts/setup_cron.sh"
 
