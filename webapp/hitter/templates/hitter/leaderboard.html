@@ -15,7 +15,7 @@
         </div>
         <div>
             <label class="form-label fw-semibold mb-1">Min BIP</label>
-            <input type="number" class="form-control form-control-sm" name="min_bip" value="{{ min_bip }}" min="1" style="width:90px">
+            <input type="number" class="form-control form-control-sm" name="min_bip" value="{{ min_bip }}" min="0" style="width:90px">
         </div>
         <div>
             <button type="submit" class="btn btn-primary btn-sm">Apply</button>
@@ -26,36 +26,78 @@
     </form>
 </div>
 
+<div class="filter-bar mt-2 d-flex flex-wrap align-items-end gap-3">
+    <div style="min-width:280px">
+        <label class="form-label fw-semibold mb-1">Player Filter <span class="text-muted fw-normal">(max 30)</span></label>
+        <select id="player-filter" multiple class="form-select form-select-sm" style="width:100%"></select>
+    </div>
+    <form method="POST" action="{{ url_for('hitter.upload_roster') }}" enctype="multipart/form-data" class="d-flex flex-wrap align-items-end gap-2">
+        <div>
+            <label class="form-label fw-semibold mb-1">Upload Roster CSV</label>
+            <input type="file" class="form-control form-control-sm" name="roster_file" accept=".csv" style="width:200px">
+        </div>
+        <div>
+            <button type="submit" class="btn btn-outline-primary btn-sm">Upload</button>
+        </div>
+    </form>
+    {% if roster_ids %}
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-info">{{ roster_ids|length }} roster players</span>
+        <a href="{{ url_for('hitter.clear_roster') }}" class="btn btn-outline-danger btn-sm">Clear</a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="d-flex flex-wrap gap-2 align-items-center my-2">
+    <div class="dropdown">
+        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">Columns</button>
+        <div class="dropdown-menu col-vis-dropdown" id="col-vis-menu"></div>
+    </div>
+    <button class="btn btn-sm btn-success" id="btn-export-excel">Export Excel</button>
+    <button class="btn btn-sm btn-outline-success" id="btn-export-csv">Export CSV</button>
+</div>
+
 <div class="dt-scroll">
-    <table id="leaderboard" class="table table-sm table-hover table-striped" style="width:100%">
+    <table id="leaderboard" class="table table-sm table-hover table-striped">
         <thead>
             <tr>
                 <th rowspan="2">#</th>
                 <th rowspan="2">Batter</th>
-                <th colspan="2" class="text-center bg-primary bg-opacity-10">BIP</th>
-                <th colspan="2" class="text-center bg-primary bg-opacity-10">EV</th>
-                <th colspan="2" class="text-center bg-primary bg-opacity-10">MaxEV</th>
-                <th colspan="2" class="text-center bg-primary bg-opacity-10">AvLA</th>
-                <th colspan="2" class="text-center bg-primary bg-opacity-10">EV90</th>
-                <th colspan="2" class="text-center bg-primary bg-opacity-10">Barrels</th>
-                <th colspan="2" class="text-center bg-primary bg-opacity-10">Barrel%</th>
-                <th colspan="2" class="text-center bg-primary bg-opacity-10">Bat Spd</th>
-                <th colspan="2" class="text-center bg-primary bg-opacity-10">xBA</th>
-                <th colspan="2" class="text-center bg-primary bg-opacity-10">K%</th>
-                <th colspan="2" class="text-center bg-primary bg-opacity-10">xwOBA</th>
-                <th colspan="2" class="text-center bg-primary bg-opacity-10">100+</th>
-                <th colspan="2" class="text-center bg-primary bg-opacity-10">BBIA 100+</th>
+                <th colspan="13" class="text-center tf-header">Timeframe</th>
+                <th colspan="13" class="text-center l14-header">Last 14</th>
             </tr>
             <tr>
-                {% for _ in range(12) %}
-                <th class="small fw-normal">TF</th>
-                <th class="small fw-normal text-warning-emphasis">L14</th>
-                {% endfor %}
+                <th>BIP</th>
+                <th>EV</th>
+                <th>MaxEV</th>
+                <th>AvLA</th>
+                <th>EV90</th>
+                <th>Barrels</th>
+                <th>Barrel%</th>
+                <th>Bat Spd</th>
+                <th>xBA</th>
+                <th>K%</th>
+                <th>xwOBA</th>
+                <th>100+</th>
+                <th>BBIA 100+</th>
+                <th>L-BIP</th>
+                <th>L-EV</th>
+                <th>L-MaxEV</th>
+                <th>L-AvLA</th>
+                <th>L-EV90</th>
+                <th>L-Barrels</th>
+                <th>L-Barrel%</th>
+                <th>L-Bat Spd</th>
+                <th>L-xBA</th>
+                <th>L-K%</th>
+                <th>L-xwOBA</th>
+                <th>L-100+</th>
+                <th>L-BBIA 100+</th>
             </tr>
         </thead>
         <tbody>
             {% for h in hitters %}
-            <tr>
+            <tr data-batter="{{ h.batter }}">
                 <td>{{ loop.index }}</td>
                 <td>
                     <a href="{{ url_for('hitter.detail', batter_id=h.batter, start_date=start_date, end_date=end_date) }}">
@@ -63,30 +105,30 @@
                     </a>
                 </td>
                 <td>{{ h.bip }}</td>
-                <td>{{ h.l14_bip or '-' }}</td>
                 <td>{{ "%.1f"|format(h.ev) if h.ev is not none else '-' }}</td>
-                <td>{{ "%.1f"|format(h.l14_ev) if h.l14_ev is not none else '-' }}</td>
                 <td>{{ "%.1f"|format(h.max_ev) if h.max_ev is not none else '-' }}</td>
-                <td>{{ "%.1f"|format(h.l14_max_ev) if h.l14_max_ev is not none else '-' }}</td>
                 <td>{{ "%.1f"|format(h.av_la) if h.av_la is not none else '-' }}</td>
-                <td>{{ "%.1f"|format(h.l14_av_la) if h.l14_av_la is not none else '-' }}</td>
                 <td>{{ "%.1f"|format(h.ev90) if h.ev90 is not none else '-' }}</td>
-                <td>{{ "%.1f"|format(h.l14_ev90) if h.l14_ev90 is not none else '-' }}</td>
                 <td>{{ h.barrels }}</td>
-                <td>{{ h.l14_barrels or '-' }}</td>
                 <td>{{ "%.1f"|format(h.barrel_pct) if h.barrel_pct is not none else '-' }}</td>
-                <td>{{ "%.1f"|format(h.l14_barrel_pct) if h.l14_barrel_pct is not none else '-' }}</td>
                 <td>{{ "%.1f"|format(h.bat_speed) if h.bat_speed is not none else '-' }}</td>
-                <td>{{ "%.1f"|format(h.l14_bat_speed) if h.l14_bat_speed is not none else '-' }}</td>
                 <td>{{ "%.3f"|format(h.xba) if h.xba is not none else '-' }}</td>
-                <td>{{ "%.3f"|format(h.l14_xba) if h.l14_xba is not none else '-' }}</td>
                 <td>{{ "%.1f"|format(h.k_pct) if h.k_pct is not none else '-' }}%</td>
-                <td>{{ "%.1f"|format(h.l14_k_pct) if h.l14_k_pct is not none else '-' }}%</td>
                 <td>{{ "%.3f"|format(h.xwoba) if h.xwoba is not none else '-' }}</td>
-                <td>{{ "%.3f"|format(h.l14_xwoba) if h.l14_xwoba is not none else '-' }}</td>
                 <td>{{ h.bip_100 }}</td>
-                <td>{{ h.l14_bip_100 or '-' }}</td>
                 <td>{{ h.bbia_100 }}</td>
+                <td>{{ h.l14_bip or '-' }}</td>
+                <td>{{ "%.1f"|format(h.l14_ev) if h.l14_ev is not none else '-' }}</td>
+                <td>{{ "%.1f"|format(h.l14_max_ev) if h.l14_max_ev is not none else '-' }}</td>
+                <td>{{ "%.1f"|format(h.l14_av_la) if h.l14_av_la is not none else '-' }}</td>
+                <td>{{ "%.1f"|format(h.l14_ev90) if h.l14_ev90 is not none else '-' }}</td>
+                <td>{{ h.l14_barrels or '-' }}</td>
+                <td>{{ "%.1f"|format(h.l14_barrel_pct) if h.l14_barrel_pct is not none else '-' }}</td>
+                <td>{{ "%.1f"|format(h.l14_bat_speed) if h.l14_bat_speed is not none else '-' }}</td>
+                <td>{{ "%.3f"|format(h.l14_xba) if h.l14_xba is not none else '-' }}</td>
+                <td>{{ "%.1f"|format(h.l14_k_pct) if h.l14_k_pct is not none else '-' }}%</td>
+                <td>{{ "%.3f"|format(h.l14_xwoba) if h.l14_xwoba is not none else '-' }}</td>
+                <td>{{ h.l14_bip_100 or '-' }}</td>
                 <td>{{ h.l14_bbia_100 or '-' }}</td>
             </tr>
             {% endfor %}
@@ -98,16 +140,164 @@
 {% block extra_scripts %}
 <script>
 $(document).ready(function() {
-    $('#leaderboard').DataTable({
-        pageLength: 25,
-        order: [[3, 'desc']],
+    var rosterIds = {{ roster_ids | tojson }} || [];
+    var hasRoster = rosterIds.length > 0;
+
+    var hiddenByDefault = [3, 6, 8, 16, 19, 21];
+
+    // Roster + player filter - registered before DataTable init
+    $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+        if (settings.nTable.id !== 'leaderboard') return true;
+        var row = settings.aoData[dataIndex];
+        if (!row || !row.nTr) return true;
+        var batterId = parseInt(row.nTr.getAttribute('data-batter'));
+        if (isNaN(batterId)) return true;
+
+        // Roster: always filter when roster is loaded
+        if (hasRoster && rosterIds.indexOf(batterId) === -1) {
+            return false;
+        }
+
+        // Player filter
+        var selectedIds = $('#player-filter').val();
+        if (selectedIds && selectedIds.length > 0) {
+            return selectedIds.indexOf(String(batterId)) !== -1;
+        }
+
+        return true;
+    });
+
+    var table = $('#leaderboard').DataTable({
+        paging: false,
+        autoWidth: false,
+        info: false,
+        order: [[4, 'desc']],
         columnDefs: [
             { orderable: false, targets: [0, 1] },
-            { targets: '_all', type: 'num' }
-        ],
-        dom: '<"row"<"col-sm-6"l><"col-sm-6"f>>rtip',
-        language: { search: 'Filter:' }
+            { targets: '_all', type: 'num' },
+            { visible: false, targets: hiddenByDefault }
+        ]
     });
+
+    // --- Fix sticky left offset for batter column ---
+    function fixStickyOffsets() {
+        var firstColW = $('#leaderboard tbody td:first-child').outerWidth() || 40;
+        $('#leaderboard tbody td:nth-child(2), #leaderboard thead th:nth-child(2)').css('left', firstColW + 'px');
+    }
+    setTimeout(fixStickyOffsets, 100);
+
+    // --- Column visibility dropdown ---
+    var headerNames = [];
+    $('#leaderboard thead tr:nth-child(2) th').each(function(i) {
+        headerNames.push({ idx: i, name: $(this).text() });
+    });
+
+    var $menu = $('#col-vis-menu');
+    headerNames.forEach(function(col) {
+        var checked = hiddenByDefault.indexOf(col.idx) === -1 ? 'checked' : '';
+        $menu.append(
+            '<label class="dropdown-item"><input type="checkbox" data-col="' + col.idx + '" ' + checked + '> ' + col.name + '</label>'
+        );
+    });
+
+    $menu.on('change', 'input', function() {
+        var colIdx = parseInt($(this).data('col'));
+        table.column(colIdx).visible($(this).is(':checked'));
+        fixStickyOffsets();
+    });
+
+    // --- Export functions ---
+    function getVisibleData() {
+        var headers = [];
+        var isL14 = [];
+        var visibleColIdxs = [];
+
+        table.columns().every(function(i) {
+            if (this.visible()) {
+                headers.push($(this.header()).text().trim());
+                isL14.push(i >= 15);
+                visibleColIdxs.push(i);
+            }
+        });
+
+        var rows = [];
+        table.rows({ search: 'applied' }).every(function(rowIdx) {
+            var rowData = [];
+            visibleColIdxs.forEach(function(colIdx) {
+                var node = table.cell(rowIdx, colIdx).node();
+                rowData.push(node ? $(node).text().trim() : '');
+            });
+            rows.push(rowData);
+        });
+        return { headers: headers, rows: rows, isL14: isL14 };
+    }
+
+    $('#btn-export-csv').on('click', function() {
+        var data = getVisibleData();
+        var lines = [data.headers.join(',')];
+        data.rows.forEach(function(row) {
+            lines.push(row.map(function(v) { return '"' + v.replace(/"/g, '""') + '"'; }).join(','));
+        });
+        var blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'hitter_leaderboard.csv';
+        a.click();
+    });
+
+    $('#btn-export-excel').on('click', function() {
+        var data = getVisibleData();
+        var wsData = [data.headers].concat(data.rows);
+        var ws = XLSX.utils.aoa_to_sheet(wsData);
+
+        // Color header cells: blue for TF, amber for L14
+        var blueFill = { patternType: 'solid', fgColor: { rgb: 'CFE2FF' } };
+        var amberFill = { patternType: 'solid', fgColor: { rgb: 'FFF3CD' } };
+        var headerFont = { bold: true };
+
+        for (var c = 0; c < data.headers.length; c++) {
+            var addr = XLSX.utils.encode_cell({ r: 0, c: c });
+            if (!ws[addr]) ws[addr] = { v: data.headers[c], t: 's' };
+            ws[addr].s = {
+                font: headerFont,
+                fill: data.isL14[c] ? amberFill : blueFill,
+                alignment: { horizontal: 'center' }
+            };
+        }
+
+        // Auto-fit column widths
+        var colWidths = data.headers.map(function(h, i) {
+            var maxLen = h.length;
+            data.rows.forEach(function(row) {
+                if (row[i] && row[i].length > maxLen) maxLen = row[i].length;
+            });
+            return { wch: Math.min(maxLen + 2, 20) };
+        });
+        ws['!cols'] = colWidths;
+
+        var wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Leaderboard');
+        XLSX.writeFile(wb, 'hitter_leaderboard.xlsx');
+    });
+
+    // --- Player fuzzy search (Select2) ---
+    $('#player-filter').select2({
+        ajax: {
+            url: '{{ url_for("hitter.api_players") }}',
+            dataType: 'json',
+            delay: 250,
+            data: function(params) { return { q: params.term || '' }; },
+            processResults: function(data) { return { results: data }; }
+        },
+        minimumInputLength: 2,
+        maximumSelectionLength: 30,
+        placeholder: 'Search players...',
+        allowClear: true,
+        templateResult: function(item) { return item.text; },
+        templateSelection: function(item) { return item.text; }
+    });
+
+    $('#player-filter').on('change', function() { table.draw(); });
 });
 </script>
 {% endblock %}

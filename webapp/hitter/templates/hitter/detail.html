@@ -81,8 +81,10 @@
 {% endif %}
 
 <div class="card mb-4">
-    <div class="card-body">
-        <canvas id="scatterChart" height="400"></canvas>
+    <div class="card-body p-2">
+        <div class="chart-container">
+            <canvas id="scatterChart"></canvas>
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -118,6 +120,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     plugins: {
                         tooltip: {
                             callbacks: {

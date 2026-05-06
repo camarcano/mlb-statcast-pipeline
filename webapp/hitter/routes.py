@@ -1,10 +1,11 @@
 from datetime import date, timedelta
 
 import pandas as pd
-from flask import Blueprint, jsonify, render_template, request
+from flask import Blueprint, flash, jsonify, render_template, request, session, url_for, redirect
 
 from webapp.db import get_db
 from webapp.hitter.calculations import compute_leaderboard
+from webapp.hitter.id_mapping import map_roster_csv
 from webapp.hitter.queries import BIP_QUERY, PA_QUERY, SCATTER_QUERY
 
 hitter_bp = Blueprint("hitter", __name__, template_folder="templates")
@@ -22,7 +23,7 @@ def _default_dates():
 def leaderboard():
     start_date = request.args.get("start_date")
     end_date = request.args.get("end_date")
-    min_bip = int(request.args.get("min_bip", 10))
+    min_bip = int(request.args.get("min_bip", 0))
 
     if not start_date or not end_date:
         start_date, end_date = _default_dates()
@@ -41,12 +42,15 @@ def leaderboard():
 
     hitters = compute_leaderboard(bip_tf, pa_tf, bip_l14, pa_l14, min_bip)
 
+    roster_ids = session.get("roster_batter_ids", [])
+
     return render_template(
         "hitter/leaderboard.html",
         hitters=hitters,
         start_date=start_date,
         end_date=end_date,
         min_bip=min_bip,
+        roster_ids=roster_ids,
     )
 
 
@@ -131,3 +135,47 @@ def scatter_data(batter_id):
         })
 
     return jsonify(data)
+
+
+@hitter_bp.route("/api/players")
+def api_players():
+    q = request.args.get("q", "").strip()
+    if len(q) < 2:
+        return jsonify([])
+
+    db = get_db()
+    pattern = f"%{q}%"
+    rows = db.execute(
+        "SELECT DISTINCT batter, player_name FROM statcast_pitches "
+        "WHERE player_name LIKE ? ORDER BY player_name LIMIT 50",
+        (pattern,),
+    ).fetchall()
+
+    results = [{"id": str(r["batter"]), "text": r["player_name"]} for r in rows]
+    return jsonify(results)
+
+
+@hitter_bp.route("/upload-roster", methods=["POST"])
+def upload_roster():
+    file = request.files.get("roster_file")
+    if not file or not file.filename.endswith(".csv"):
+        flash("Please upload a .csv file.", "warning")
+        return redirect(url_for("hitter.leaderboard"))
+
+    batter_ids, total = map_roster_csv(file)
+    unmatched = total - len(batter_ids)
+    session["roster_batter_ids"] = batter_ids
+
+    flash(
+        f"Roster loaded: {len(batter_ids)} players matched"
+        + (f", {unmatched} unmatched" if unmatched else ""),
+        "success",
+    )
+    return redirect(url_for("hitter.leaderboard"))
+
+
+@hitter_bp.route("/clear-roster")
+def clear_roster():
+    session.pop("roster_batter_ids", None)
+    flash("Roster cleared.", "info")
+    return redirect(url_for("hitter.leaderboard"))
