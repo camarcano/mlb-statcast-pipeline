@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}{{ player_name }} - Savant Analytics{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-3">
+    <h4 class="mb-0 me-3">{{ player_name }}</h4>
+    <span class="text-muted" style="font-size:0.85rem">ID: {{ batter_id }}</span>
+</div>
+
+<div class="filter-bar d-flex flex-wrap align-items-end gap-3 mb-3">
+    <form method="GET" class="d-flex flex-wrap align-items-end gap-3">
+        <div>
+            <label class="form-label fw-semibold mb-1">Start Date</label>
+            <input type="date" class="form-control form-control-sm" name="start_date" value="{{ start_date }}" style="width:160px">
+        </div>
+        <div>
+            <label class="form-label fw-semibold mb-1">End Date</label>
+            <input type="date" class="form-control form-control-sm" name="end_date" value="{{ end_date }}" style="width:160px">
+        </div>
+        <div>
+            <button type="submit" class="btn btn-primary btn-sm">Apply</button>
+        </div>
+        <div>
+            <a href="{{ url_for('hitter.leaderboard') }}" class="btn btn-outline-secondary btn-sm">Back to Leaderboard</a>
+        </div>
+    </form>
+</div>
+
+{% if stats %}
+<div class="row g-3 mb-4">
+    <div class="col-auto">
+        <div class="stat-card">
+            <div class="stat-value">{{ stats.bip }}</div>
+            <div class="stat-label">BIP</div>
+        </div>
+    </div>
+    <div class="col-auto">
+        <div class="stat-card">
+            <div class="stat-value">{{ "%.1f"|format(stats.ev) if stats.ev is not none else '-' }}</div>
+            <div class="stat-label">EV</div>
+        </div>
+    </div>
+    <div class="col-auto">
+        <div class="stat-card">
+            <div class="stat-value">{{ "%.1f"|format(stats.max_ev) if stats.max_ev is not none else '-' }}</div>
+            <div class="stat-label">Max EV</div>
+        </div>
+    </div>
+    <div class="col-auto">
+        <div class="stat-card">
+            <div class="stat-value">{{ "%.1f"|format(stats.ev90) if stats.ev90 is not none else '-' }}</div>
+            <div class="stat-label">EV90</div>
+        </div>
+    </div>
+    <div class="col-auto">
+        <div class="stat-card">
+            <div class="stat-value">{{ stats.barrels }}</div>
+            <div class="stat-label">Barrels</div>
+        </div>
+    </div>
+    <div class="col-auto">
+        <div class="stat-card">
+            <div class="stat-value">{{ "%.3f"|format(stats.xba) if stats.xba is not none else '-' }}</div>
+            <div class="stat-label">xBA</div>
+        </div>
+    </div>
+    <div class="col-auto">
+        <div class="stat-card">
+            <div class="stat-value">{{ "%.1f"|format(stats.k_pct) if stats.k_pct is not none else '-' }}%</div>
+            <div class="stat-label">K%</div>
+        </div>
+    </div>
+    <div class="col-auto">
+        <div class="stat-card">
+            <div class="stat-value">{{ "%.3f"|format(stats.xwoba) if stats.xwoba is not none else '-' }}</div>
+            <div class="stat-label">xwOBA</div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="card mb-4">
+    <div class="card-body">
+        <canvas id="scatterChart" height="400"></canvas>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var batterId = {{ batter_id }};
+    var startDate = '{{ start_date }}';
+    var endDate = '{{ end_date }}';
+
+    fetch('{{ url_for("hitter.scatter_data", batter_id=batter_id) }}?start_date=' + startDate + '&end_date=' + endDate)
+        .then(function(resp) { return resp.json(); })
+        .then(function(data) {
+            var colors = data.map(function(d) {
+                if (d.bb_type === 'fly_ball' && d.y >= 98 && d.x >= 25 && d.x <= 30) return 'rgba(220, 53, 69, 0.7)';
+                if (d.event && d.event.includes('home_run')) return 'rgba(25, 135, 84, 0.8)';
+                if (d.event && ['single','double','triple'].includes(d.event)) return 'rgba(13, 110, 253, 0.6)';
+                return 'rgba(108, 117, 125, 0.4)';
+            });
+
+            var ctx = document.getElementById('scatterChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'BIP',
+                        data: data,
+                        pointBackgroundColor: colors,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) {
+                                    var d = ctx.raw;
+                                    return 'EV: ' + d.y.toFixed(1) + ' | LA: ' + d.x.toFixed(1) + ' | ' + d.event;
+                                }
+                            }
+                        },
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Launch Angle (degrees)' },
+                            min: -50, max: 70,
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Exit Velocity (mph)' },
+                            min: 40, max: 125,
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        }
+                    }
+                }
+            });
+        });
+});
+</script>
+{% endblock %}

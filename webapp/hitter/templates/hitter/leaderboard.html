@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Hitter Analyst - Savant Analytics{% endblock %}
+
+{% block content %}
+<div class="filter-bar d-flex flex-wrap align-items-end gap-3">
+    <form method="GET" action="{{ url_for('hitter.leaderboard') }}" class="d-flex flex-wrap align-items-end gap-3 w-100">
+        <div>
+            <label class="form-label fw-semibold mb-1">Start Date</label>
+            <input type="date" class="form-control form-control-sm" name="start_date" value="{{ start_date }}" style="width:160px">
+        </div>
+        <div>
+            <label class="form-label fw-semibold mb-1">End Date</label>
+            <input type="date" class="form-control form-control-sm" name="end_date" value="{{ end_date }}" style="width:160px">
+        </div>
+        <div>
+            <label class="form-label fw-semibold mb-1">Min BIP</label>
+            <input type="number" class="form-control form-control-sm" name="min_bip" value="{{ min_bip }}" min="1" style="width:90px">
+        </div>
+        <div>
+            <button type="submit" class="btn btn-primary btn-sm">Apply</button>
+        </div>
+        <div class="ms-auto text-muted" style="font-size:0.8rem">
+            {{ hitters|length }} hitters &middot; {{ start_date }} to {{ end_date }}
+        </div>
+    </form>
+</div>
+
+<div class="dt-scroll">
+    <table id="leaderboard" class="table table-sm table-hover table-striped" style="width:100%">
+        <thead>
+            <tr>
+                <th rowspan="2">#</th>
+                <th rowspan="2">Batter</th>
+                <th colspan="2" class="text-center bg-primary bg-opacity-10">BIP</th>
+                <th colspan="2" class="text-center bg-primary bg-opacity-10">EV</th>
+                <th colspan="2" class="text-center bg-primary bg-opacity-10">MaxEV</th>
+                <th colspan="2" class="text-center bg-primary bg-opacity-10">AvLA</th>
+                <th colspan="2" class="text-center bg-primary bg-opacity-10">EV90</th>
+                <th colspan="2" class="text-center bg-primary bg-opacity-10">Barrels</th>
+                <th colspan="2" class="text-center bg-primary bg-opacity-10">Barrel%</th>
+                <th colspan="2" class="text-center bg-primary bg-opacity-10">Bat Spd</th>
+                <th colspan="2" class="text-center bg-primary bg-opacity-10">xBA</th>
+                <th colspan="2" class="text-center bg-primary bg-opacity-10">K%</th>
+                <th colspan="2" class="text-center bg-primary bg-opacity-10">xwOBA</th>
+                <th colspan="2" class="text-center bg-primary bg-opacity-10">100+</th>
+                <th colspan="2" class="text-center bg-primary bg-opacity-10">BBIA 100+</th>
+            </tr>
+            <tr>
+                {% for _ in range(12) %}
+                <th class="small fw-normal">TF</th>
+                <th class="small fw-normal text-warning-emphasis">L14</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for h in hitters %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>
+                    <a href="{{ url_for('hitter.detail', batter_id=h.batter, start_date=start_date, end_date=end_date) }}">
+                        {{ h.player_name }}
+                    </a>
+                </td>
+                <td>{{ h.bip }}</td>
+                <td>{{ h.l14_bip or '-' }}</td>
+                <td>{{ "%.1f"|format(h.ev) if h.ev is not none else '-' }}</td>
+                <td>{{ "%.1f"|format(h.l14_ev) if h.l14_ev is not none else '-' }}</td>
+                <td>{{ "%.1f"|format(h.max_ev) if h.max_ev is not none else '-' }}</td>
+                <td>{{ "%.1f"|format(h.l14_max_ev) if h.l14_max_ev is not none else '-' }}</td>
+                <td>{{ "%.1f"|format(h.av_la) if h.av_la is not none else '-' }}</td>
+                <td>{{ "%.1f"|format(h.l14_av_la) if h.l14_av_la is not none else '-' }}</td>
+                <td>{{ "%.1f"|format(h.ev90) if h.ev90 is not none else '-' }}</td>
+                <td>{{ "%.1f"|format(h.l14_ev90) if h.l14_ev90 is not none else '-' }}</td>
+                <td>{{ h.barrels }}</td>
+                <td>{{ h.l14_barrels or '-' }}</td>
+                <td>{{ "%.1f"|format(h.barrel_pct) if h.barrel_pct is not none else '-' }}</td>
+                <td>{{ "%.1f"|format(h.l14_barrel_pct) if h.l14_barrel_pct is not none else '-' }}</td>
+                <td>{{ "%.1f"|format(h.bat_speed) if h.bat_speed is not none else '-' }}</td>
+                <td>{{ "%.1f"|format(h.l14_bat_speed) if h.l14_bat_speed is not none else '-' }}</td>
+                <td>{{ "%.3f"|format(h.xba) if h.xba is not none else '-' }}</td>
+                <td>{{ "%.3f"|format(h.l14_xba) if h.l14_xba is not none else '-' }}</td>
+                <td>{{ "%.1f"|format(h.k_pct) if h.k_pct is not none else '-' }}%</td>
+                <td>{{ "%.1f"|format(h.l14_k_pct) if h.l14_k_pct is not none else '-' }}%</td>
+                <td>{{ "%.3f"|format(h.xwoba) if h.xwoba is not none else '-' }}</td>
+                <td>{{ "%.3f"|format(h.l14_xwoba) if h.l14_xwoba is not none else '-' }}</td>
+                <td>{{ h.bip_100 }}</td>
+                <td>{{ h.l14_bip_100 or '-' }}</td>
+                <td>{{ h.bbia_100 }}</td>
+                <td>{{ h.l14_bbia_100 or '-' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+$(document).ready(function() {
+    $('#leaderboard').DataTable({
+        pageLength: 25,
+        order: [[3, 'desc']],
+        columnDefs: [
+            { orderable: false, targets: [0, 1] },
+            { targets: '_all', type: 'num' }
+        ],
+        dom: '<"row"<"col-sm-6"l><"col-sm-6"f>>rtip',
+        language: { search: 'Filter:' }
+    });
+});
+</script>
+{% endblock %}

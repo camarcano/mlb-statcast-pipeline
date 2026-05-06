@@ -3,3 +3,5 @@ requests>=2.31
 python-dotenv>=1.0
 pandas>=2.1
 tqdm>=4.66
+flask>=3.0
+flask-login>=0.6
