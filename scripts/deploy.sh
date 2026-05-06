@@ -1,63 +1,69 @@
 #!/bin/bash
 set -e
 
-INSTALL_DIR="${INSTALL_DIR:-/opt/mlb-statcast-pipeline}"
+# Usage: Run this AFTER cloning the repo manually.
+#   bash scripts/deploy.sh
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+INSTALL_DIR="$(dirname "$SCRIPT_DIR")"
 VENV_DIR="$INSTALL_DIR/venv"
-REPO_NAME="mlb-statcast-pipeline"
 
-echo "=== MLB Statcast Pipeline Deployment ==="
+echo "=== MLB Statcast Pipeline Setup ==="
+echo "Install dir: $INSTALL_DIR"
+echo ""
 
+# 1. Verify .env exists
 if [ ! -f "$INSTALL_DIR/.env" ]; then
-    echo "ERROR: $INSTALL_DIR/.env not found."
-    echo "Create it from .env.example with your GH_PAT and GH_USERNAME."
+    echo "ERROR: .env not found in $INSTALL_DIR"
+    echo "Create one from .env.example before running this script."
+    echo ""
+    echo "  cp .env.example .env"
+    echo "  nano .env"
     exit 1
 fi
 
-source "$INSTALL_DIR/.env"
+# 2. Verify Python 3.10+
+PYTHON_VERSION=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+echo "Python version: $PYTHON_VERSION"
 
-if [ -z "$GH_PAT" ] || [ -z "$GH_USERNAME" ]; then
-    echo "ERROR: GH_PAT and GH_USERNAME must be set in .env"
-    exit 1
-fi
-
-REPO_URL="https://${GH_PAT}@github.com/${GH_USERNAME}/${REPO_NAME}.git"
-
-if [ -d "$INSTALL_DIR/.git" ]; then
-    echo "Updating existing installation..."
-    cd "$INSTALL_DIR"
-    git pull
-else
-    echo "Cloning repository..."
-    git clone "$REPO_URL" "$INSTALL_DIR"
-    cd "$INSTALL_DIR"
-fi
-
+# 3. Create virtual environment
 if [ ! -d "$VENV_DIR" ]; then
     echo "Creating virtual environment..."
     python3 -m venv "$VENV_DIR"
 fi
 
+# 4. Install dependencies
 echo "Installing dependencies..."
 source "$VENV_DIR/bin/activate"
-pip install --upgrade pip
-pip install -r requirements.txt
-pip install -e .
+pip install --upgrade pip --quiet
+pip install -r "$INSTALL_DIR/requirements.txt" --quiet
+pip install -e "$INSTALL_DIR" --quiet
 
+# 5. Initialize database
 if [ ! -f "$INSTALL_DIR/data/savant.db" ]; then
     echo "Initializing database..."
     statcast init
-    echo "Running initial backfill (this will take a while)..."
-    statcast backfill
+    echo ""
+    echo "Database created. Run the backfill to load historical data:"
+    echo "  source $VENV_DIR/bin/activate"
+    echo "  statcast backfill"
 else
     echo "Database already exists. Running update..."
     statcast update --days-back 3
 fi
 
-echo "Setting up cron job..."
+# 6. Set up cron job
+echo ""
 bash "$INSTALL_DIR/scripts/setup_cron.sh"
 
 echo ""
-echo "=== Deployment complete ==="
-echo "CLI: $VENV_DIR/bin/statcast"
-echo "DB:  $INSTALL_DIR/data/savant.db"
-echo "Log: $INSTALL_DIR/logs/statcast.log"
+echo "=== Setup complete ==="
+echo "CLI:     $VENV_DIR/bin/statcast"
+echo "DB:      $INSTALL_DIR/data/savant.db"
+echo "Logs:    $INSTALL_DIR/logs/"
+echo ""
+echo "Quick commands:"
+echo "  statcast status    - View database stats"
+echo "  statcast backfill  - Load 2025-present data"
+echo "  statcast update    - Fetch latest data"
+echo "  statcast audit     - Check for missing data"
