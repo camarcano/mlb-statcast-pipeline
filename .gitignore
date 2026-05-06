@@ -1,0 +1,39 @@
+# Database
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+data/*.db
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+venv/
+.venv/
+
+# Logs
+logs/*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Sample data
+*.csv
+
+# Excalidraw
+excalidraw.log
