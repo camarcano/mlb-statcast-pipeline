@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}{{ player_name }} - Savant Analytics{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-3">
+    <h4 class="mb-0 me-3">{{ player_name }}</h4>
+    <span class="text-muted" style="font-size:0.85rem">ID: {{ pitcher_id }}</span>
+</div>
+
+<div class="filter-bar d-flex flex-wrap align-items-end gap-3 mb-3">
+    <form method="GET" class="d-flex flex-wrap align-items-end gap-3">
+        <div>
+            <label class="form-label fw-semibold mb-1">Start Date</label>
+            <input type="date" class="form-control form-control-sm" name="start_date" value="{{ start_date }}" style="width:160px">
+        </div>
+        <div>
+            <label class="form-label fw-semibold mb-1">End Date</label>
+            <input type="date" class="form-control form-control-sm" name="end_date" value="{{ end_date }}" style="width:160px">
+        </div>
+        <div>
+            <button type="submit" class="btn btn-primary btn-sm">Apply</button>
+        </div>
+        <div>
+            <a href="{{ url_for('pitcher.leaderboard') }}" class="btn btn-outline-secondary btn-sm">Back to Leaderboard</a>
+        </div>
+    </form>
+</div>
+
+{% if stats %}
+<div class="row g-3 mb-4">
+    <div class="col-auto">
+        <div class="stat-card">
+            <div class="stat-value">{{ "%.1f"|format(stats.fb_velo) if stats.fb_velo is not none else '-' }}</div>
+            <div class="stat-label">FB Velo</div>
+        </div>
+    </div>
+    <div class="col-auto">
+        <div class="stat-card">
+            <div class="stat-value">{{ "%.1f"|format(stats.k_bb_pct) if stats.k_bb_pct is not none else '-' }}%</div>
+            <div class="stat-label">K%-BB%</div>
+        </div>
+    </div>
+    <div class="col-auto">
+        <div class="stat-card">
+            <div class="stat-value">{{ "%.1f"|format(stats.ld_pct) if stats.ld_pct is not none else '-' }}%</div>
+            <div class="stat-label">LD%</div>
+        </div>
+    </div>
+    <div class="col-auto">
+        <div class="stat-card">
+            <div class="stat-value">{{ "%.1f"|format(stats.barrel_pct) if stats.barrel_pct is not none else '-' }}%</div>
+            <div class="stat-label">Barrel%</div>
+        </div>
+    </div>
+    <div class="col-auto">
+        <div class="stat-card">
+            <div class="stat-value">{{ "%.1f"|format(stats.hh_pct) if stats.hh_pct is not none else '-' }}%</div>
+            <div class="stat-label">HH%</div>
+        </div>
+    </div>
+    <div class="col-auto">
+        <div class="stat-card">
+            <div class="stat-value">{{ "%.1f"|format(stats.strike_pct) if stats.strike_pct is not none else '-' }}%</div>
+            <div class="stat-label">Strike%</div>
+        </div>
+    </div>
+    <div class="col-auto">
+        <div class="stat-card">
+            <div class="stat-value">{{ stats.whiffs|int if stats.whiffs is not none else '-' }}</div>
+            <div class="stat-label">Whiffs</div>
+        </div>
+    </div>
+    <div class="col-auto">
+        <div class="stat-card">
+            <div class="stat-value">{{ "%.1f"|format(stats.csw_pct) if stats.csw_pct is not none else '-' }}%</div>
+            <div class="stat-label">CSW%</div>
+        </div>
+    </div>
+    <div class="col-auto">
+        <div class="stat-card">
+            <div class="stat-value">{{ stats.bbia_100 }}</div>
+            <div class="stat-label">BBIA 100+</div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="card mb-4">
+    <div class="card-body p-2">
+        <div class="chart-container">
+            <canvas id="scatterChart"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var pitcherId = {{ pitcher_id }};
+    var startDate = '{{ start_date }}';
+    var endDate = '{{ end_date }}';
+
+    fetch('{{ url_for("pitcher.scatter_data", pitcher_id=pitcher_id) }}?start_date=' + startDate + '&end_date=' + endDate)
+        .then(function(resp) { return resp.json(); })
+        .then(function(data) {
+            var colors = data.map(function(d) {
+                if (d.event && d.event.includes('home_run')) return 'rgba(25, 135, 84, 0.8)';
+                if (d.event && ['single','double','triple'].includes(d.event)) return 'rgba(13, 110, 253, 0.6)';
+                if (d.pitch_type === 'FF') return 'rgba(220, 53, 69, 0.7)';
+                return 'rgba(108, 117, 125, 0.4)';
+            });
+
+            var ctx = document.getElementById('scatterChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'BIP',
+                        data: data,
+                        pointBackgroundColor: colors,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) {
+                                    var d = ctx.raw;
+                                    return 'EV: ' + d.y.toFixed(1) + ' | LA: ' + d.x.toFixed(1) + ' | ' + d.event;
+                                }
+                            }
+                        },
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Launch Angle (degrees)' },
+                            min: -50, max: 70,
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Exit Velocity (mph)' },
+                            min: 40, max: 125,
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        }
+                    }
+                }
+            });
+        });
+});
+</script>
+{% endblock %}

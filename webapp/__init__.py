@@ -34,6 +34,9 @@ def create_app(config_name="default"):
     from webapp.hitter import hitter_bp
     app.register_blueprint(hitter_bp, url_prefix="/hitter")
 
+    from webapp.pitcher.routes import pitcher_bp
+    app.register_blueprint(pitcher_bp, url_prefix="/pitcher")
+
     from webapp.auth import auth_bp
     app.register_blueprint(auth_bp, url_prefix="/auth")
 

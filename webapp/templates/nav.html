@@ -11,7 +11,8 @@
                        href="{{ url_for('hitter.leaderboard') }}">Hitter Analyst</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link disabled">Pitcher Analyst (coming soon)</a>
+                    <a class="nav-link {% if request.path.startswith('/pitcher') %}active{% endif %}"
+                       href="{{ url_for('pitcher.leaderboard') }}">Pitcher Analyst</a>
                 </li>
             </ul>
         </div>
