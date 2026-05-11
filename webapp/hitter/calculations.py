@@ -36,7 +36,7 @@ def compute_bip_stats(bip_df: pd.DataFrame) -> pd.DataFrame:
     bip_df["is_100plus"] = bip_df["launch_speed"] >= 100
     bip_df["is_bbia_100"] = (
         (bip_df["launch_speed"] >= 100)
-        & (bip_df["launch_angle"] >= 25)
+        & (bip_df["launch_angle"] >= 15)
         & (bip_df["launch_angle"] <= 50)
     )
 
