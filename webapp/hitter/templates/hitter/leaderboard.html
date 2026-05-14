@@ -31,6 +31,12 @@
         <label class="form-label fw-semibold mb-1">Player Filter <span class="text-muted fw-normal">(max 30)</span></label>
         <select id="player-filter" multiple class="form-select form-select-sm" style="width:100%"></select>
     </div>
+    <div>
+        <label class="form-label fw-semibold mb-1">Position</label>
+        <select id="position-filter" class="form-select form-select-sm" style="width:120px">
+            <option value="">All</option>
+        </select>
+    </div>
     <form method="POST" action="{{ url_for('hitter.upload_roster') }}" enctype="multipart/form-data" class="d-flex flex-wrap align-items-end gap-2">
         <div>
             <label class="form-label fw-semibold mb-1">Upload Roster CSV</label>
@@ -99,7 +105,7 @@
         <tbody>
             {% for h in hitters %}
             <tr data-batter="{{ h.batter }}">
-                <td>{{ loop.index }}</td>
+                <td></td>
                 <td>
                     <a href="{{ url_for('hitter.detail', batter_id=h.batter, start_date=start_date, end_date=end_date) }}">
                         {{ h.player_name }}
@@ -166,6 +172,15 @@ $(document).ready(function() {
             return selectedIds.indexOf(String(batterId)) !== -1;
         }
 
+        // Position filter
+        var selectedPos = $('#position-filter').val();
+        if (selectedPos) {
+            var rowPos = data[2];
+            if (!rowPos || rowPos === '-') return false;
+            var positions = rowPos.split('/').map(function(p) { return p.trim(); });
+            if (positions.indexOf(selectedPos) === -1) return false;
+        }
+
         return true;
     });
 
@@ -178,8 +193,35 @@ $(document).ready(function() {
             { orderable: false, targets: [0, 1, 2] },
             { targets: '_all', type: 'num' },
             { visible: false, targets: hiddenByDefault }
-        ]
+        ],
+        drawCallback: function(settings) {
+            var api = this.api();
+            api.rows({ search: 'applied', order: 'current' }).every(function(idx) {
+                $(api.cell(idx, 0).node()).text(idx + 1);
+            });
+        }
     });
+
+    // --- Position filter dropdown ---
+    (function() {
+        var posSet = new Set();
+        $('#leaderboard tbody tr').each(function() {
+            var posText = $(this).find('td').eq(2).text().trim();
+            if (posText && posText !== '-') {
+                posText.split('/').forEach(function(p) {
+                    var trimmed = p.trim();
+                    if (trimmed) posSet.add(trimmed);
+                });
+            }
+        });
+        var sorted = Array.from(posSet).sort();
+        var $select = $('#position-filter');
+        sorted.forEach(function(pos) {
+            $select.append('<option value="' + pos + '">' + pos + '</option>');
+        });
+    })();
+
+    $('#position-filter').on('change', function() { table.draw(); });
 
     // --- Fix sticky left offset for batter column ---
     function fixStickyOffsets() {
