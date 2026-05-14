@@ -184,6 +184,16 @@ $(document).ready(function() {
         return true;
     });
 
+    var numericCols = [3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28];
+
+    function numRender(data, type) {
+        if (type === 'sort' || type === 'type') {
+            var val = parseFloat(data);
+            return isNaN(val) ? -999 : val;
+        }
+        return data;
+    }
+
     var table = $('#leaderboard').DataTable({
         paging: false,
         autoWidth: false,
@@ -191,7 +201,7 @@ $(document).ready(function() {
         order: [[5, 'desc']],
         columnDefs: [
             { orderable: false, targets: [0, 1, 2] },
-            { targets: '_all', type: 'num' },
+            { type: 'num', targets: numericCols, render: numRender },
             { visible: false, targets: hiddenByDefault }
         ],
         drawCallback: function(settings) {
@@ -233,7 +243,8 @@ $(document).ready(function() {
     // --- Column visibility dropdown ---
     var headerNames = [];
     $('#leaderboard thead tr:nth-child(2) th').each(function(i) {
-        headerNames.push({ idx: i, name: $(this).text() });
+        var colIdx = i + 3; // offset for the 3 rowspan columns in row 1
+        headerNames.push({ idx: colIdx, name: $(this).text() });
     });
 
     var $menu = $('#col-vis-menu');
