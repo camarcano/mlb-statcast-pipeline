@@ -109,5 +109,6 @@ def compute_leaderboard(
 
     tf = tf.sort_values("fb_velo", ascending=False)
     tf = tf.round({"fb_velo": 1})
+    tf = tf.where(pd.notna(tf), None)
 
     return tf.to_dict(orient="records")

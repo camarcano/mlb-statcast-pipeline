@@ -8,11 +8,11 @@
             <ul class="navbar-nav">
                 <li class="nav-item">
                     <a class="nav-link {% if request.path.startswith('/hitter') %}active{% endif %}"
-                       href="{{ url_for('hitter.leaderboard') }}">Hitter Analyst</a>
+                       href="{{ url_for('hitter.leaderboard') }}">Hitters</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link {% if request.path.startswith('/pitcher') %}active{% endif %}"
-                       href="{{ url_for('pitcher.leaderboard') }}">Pitcher Analyst</a>
+                       href="{{ url_for('pitcher.leaderboard') }}">Pitchers</a>
                 </li>
             </ul>
         </div>

@@ -5,6 +5,7 @@
 {% block content %}
 <div class="d-flex align-items-center mb-3">
     <h4 class="mb-0 me-3">{{ player_name }}</h4>
+    {% if position %}<span class="badge bg-secondary me-2">{{ position }}</span>{% endif %}
     <span class="text-muted" style="font-size:0.85rem">ID: {{ batter_id }}</span>
 </div>
 

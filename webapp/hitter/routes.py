@@ -6,6 +6,7 @@ from flask import Blueprint, flash, jsonify, render_template, request, session, 
 from webapp.db import get_db
 from webapp.hitter.calculations import compute_leaderboard
 from webapp.hitter.id_mapping import map_roster_csv
+from webapp.hitter.names import enrich_with_positions, get_batter_position
 from webapp.hitter.queries import BIP_QUERY, PA_QUERY, SCATTER_QUERY
 
 hitter_bp = Blueprint("hitter", __name__, template_folder="templates")
@@ -41,6 +42,7 @@ def leaderboard():
     pa_l14 = pd.read_sql_query(PA_QUERY, db, params=(l14_start, l14_end))
 
     hitters = compute_leaderboard(bip_tf, pa_tf, bip_l14, pa_l14, min_bip)
+    enrich_with_positions(hitters)
 
     roster_ids = session.get("roster_batter_ids", [])
 
@@ -99,10 +101,13 @@ def detail(batter_id):
     hitters = compute_leaderboard(bip_tf, pa_tf, bip_l14, pa_l14, min_bip=1)
     hitter_stats = hitters[0] if hitters else {}
 
+    position = get_batter_position(batter_id)
+
     return render_template(
         "hitter/detail.html",
         batter_id=batter_id,
         player_name=player_name,
+        position=position,
         stats=hitter_stats,
         start_date=start_date,
         end_date=end_date,

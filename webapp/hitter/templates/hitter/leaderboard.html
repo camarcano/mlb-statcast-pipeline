@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Hitter Analyst - Savant Analytics{% endblock %}
+{% block title %}Hitters - Savant Analytics{% endblock %}
 
 {% block content %}
 <div class="filter-bar d-flex flex-wrap align-items-end gap-3">
@@ -63,6 +63,7 @@
             <tr>
                 <th rowspan="2">#</th>
                 <th rowspan="2">Batter</th>
+                <th rowspan="2" class="text-center">Pos</th>
                 <th colspan="13" class="text-center tf-header">Timeframe</th>
                 <th colspan="13" class="text-center l14-header">Last 14</th>
             </tr>
@@ -104,6 +105,7 @@
                         {{ h.player_name }}
                     </a>
                 </td>
+                <td class="text-center">{{ h.position or '-' }}</td>
                 <td data-order="{{ h.bip }}">{{ h.bip }}</td>
                 <td data-order="{{ h.ev if h.ev is not none else -999 }}">{{ "%.1f"|format(h.ev) if h.ev is not none else '-' }}</td>
                 <td data-order="{{ h.max_ev if h.max_ev is not none else -999 }}">{{ "%.1f"|format(h.max_ev) if h.max_ev is not none else '-' }}</td>
@@ -143,7 +145,7 @@ $(document).ready(function() {
     var rosterIds = {{ roster_ids | tojson }} || [];
     var hasRoster = rosterIds.length > 0;
 
-    var hiddenByDefault = [3, 6, 8, 16, 19, 21];
+    var hiddenByDefault = [4, 7, 9, 17, 20, 22];
 
     // Roster + player filter - registered before DataTable init
     $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
@@ -171,9 +173,9 @@ $(document).ready(function() {
         paging: false,
         autoWidth: false,
         info: false,
-        order: [[4, 'desc']],
+        order: [[5, 'desc']],
         columnDefs: [
-            { orderable: false, targets: [0, 1] },
+            { orderable: false, targets: [0, 1, 2] },
             { targets: '_all', type: 'num' },
             { visible: false, targets: hiddenByDefault }
         ]
@@ -215,7 +217,7 @@ $(document).ready(function() {
         table.columns().every(function(i) {
             if (this.visible()) {
                 headers.push($(this.header()).text().trim());
-                isL14.push(i >= 15);
+                isL14.push(i >= 16);
                 visibleColIdxs.push(i);
             }
         });

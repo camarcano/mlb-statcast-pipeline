@@ -136,5 +136,6 @@ def compute_leaderboard(
 
     tf = tf.sort_values("ev", ascending=False)
     tf = tf.round({"ev": 1, "max_ev": 1, "av_la": 1, "ev90": 1, "bat_speed": 1})
+    tf = tf.where(pd.notna(tf), None)
 
     return tf.to_dict(orient="records")
