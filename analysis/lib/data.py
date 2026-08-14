@@ -114,4 +114,6 @@ def pitcher_name_map() -> dict[int, str]:
     if not path.exists():
         return {}
     raw = json.loads(path.read_text())
-    return {int(k): v for k, v in raw.items()}
+    out = {int(k): v for k, v in raw.items()}
+    out.update(config.EXTRA_PITCHER_NAMES)
+    return out

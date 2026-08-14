@@ -1,0 +1,6 @@
+{
+  "git_sha": "300f7c3",
+  "min_splitter_pitches": 50,
+  "deathball_loose": "velo>=85, |hb|<=3, ivb<=-2",
+  "deathball_strict": "velo>=85, |hb|<=2, ivb<=-4"
+}

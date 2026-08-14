@@ -125,3 +125,13 @@ SWING_DESCRIPTIONS = WHIFF_DESCRIPTIONS | {
     "foul", "foul_tip", "foul_bunt", "hit_into_play", "bunt_foul_tip",
 }
 CALLED_STRIKE_DESCRIPTIONS = {"called_strike"}
+
+# Pitchers missing from data/pitcher_names.json (retired before the webapp
+# roster was built), resolved once against the MLB Stats API.
+EXTRA_PITCHER_NAMES = {
+    542882: "Andriese, Matt",
+    491624: "Valdez, C\u00e9sar",
+    # corrections to the roster file, verified against the MLB Stats API
+    656550: "Holmes, Grant",
+    605280: "Holmes, Clay",
+}

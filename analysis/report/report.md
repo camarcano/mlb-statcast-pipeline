@@ -20,7 +20,7 @@ Pitches were grouped into seven families (four-seam, sinker, cutter, slider/swee
 
 The primary unit of analysis is the **arsenal row**: one pitcher's version of one pitch family in one season, minimum 100 pitches. There are **9,191** of them. This grain matters — it stops workhorse starters from dominating a league-wide variance estimate, and it excludes position players pitching in blowouts, who never reach 100 pitches of anything.
 
-Seven studies were run. Three found nothing. That is reported here as prominently as what was found.
+Nine studies were run. Three found nothing. That is reported here as prominently as what was found.
 
 ---
 
@@ -174,28 +174,110 @@ That is precisely the mechanism the hypothesis proposes — and it explains the 
 
 ---
 
-## The existence proof: Tyler Rogers
+## The existence proofs: two kinds of outlier
 
-The ten most unusual pitches in baseball over these five seasons all belong to one man. Rogers' submarine sinker sits 20–25 standard units from the league centre; a typical pitch sits 2–3.
+Uniqueness has two ingredients that should not be conflated: throwing from a strange **place**, and throwing a strange **pitch**.
 
-| Season | Pitches | Distance from league centre | Whiff% | Run value/100 |
+The overall uniqueness ranking is owned by the first kind. Tyler Rogers' submarine sinker — released at 1.1–1.4 ft with a −61° arm angle, against a league norm of 5.6 ft and +33° — sits 20–25 standard units from the league centre and has been consistently effective for five straight seasons (run value positive every year, +1.42/100 in 2025, his most extreme season). But he is a delivery outlier: his uniqueness is dominated by release geometry, a package that comes with the whole submarine mechanic and is not separable advice for a conventional pitcher.
+
+So the ranking was recomputed on **movement only** — velocity, induced vertical break, horizontal break, spin — restricted to conventional arm slots (10–60°). This is the actionable list: strange pitches thrown from ordinary places.
+
+| Pitcher | Pitch | Season | Arm slot | Distance from centre | Whiff% | RV/100 |
+|---|---|---|---|---|---|---|
+| Matt Andriese | Changeup | 2021 | 43.7° | 10.6 | 24.7 | −0.05 |
+| Pedro Avila | Changeup | 2023 | 40.6° | 9.2 | 39.1 | +0.87 |
+| David Bednar | Splitter | 2021 | 34.6° | 8.6 | 35.2 | +1.01 |
+| Devin Williams | Changeup ("Airbender") | 2021 | 23.0° | 8.0 | **42.9** | −0.05 |
+| Camilo Doval | Cutter | 2023 | 17.5° | 8.0 | 26.2 | +0.35 |
+| Logan Allen | Changeup | 2023 | 42.0° | 7.7 | 30.5 | +0.75 |
+| Logan Webb | Changeup | 2022 | 12.5° | 7.4 | 25.0 | +0.85 |
+| César Valdez | Changeup ("dead fish") | 2021 | 10.6° | 7.6 | 28.7 | −0.05 |
+
+Two things stand out. Most of the league's strangest conventional-slot pitches are **changeups and splitters** — offspeed shapes that resist the standardized spin-based design templates. And the famous cases the industry already celebrates as unicorns (Williams' Airbender, Webb's changeup, Bednar's splitter) fall out of the arithmetic on their own, which is a decent sanity check that the uniqueness score measures what it claims to.
+
+The within-pitcher regression in the previous section is the systematic version of this table — the effect does not depend on any individual example.
+
+---
+
+## The live recolonizations: splitters and the deathball
+
+The scarcity thesis predicts that neglected shapes should get rediscovered, work well early, and erode as they crowd. Two current cases let us watch this happen in real time.
+
+### Splitters: the boom is already paying the crowding tax
+
+The splitter was excluded from the dispersion endpoint (too few 100-pitch arsenals in 2021), so it gets its own profile at a relaxed 50-pitch threshold:
+
+| Season | Pitchers | Pitches | Whiff% | CSW% | RV/100 |
+|---|---|---|---|---|---|
+| 2021 | 75 | 11,448 | 35.8 | 26.1 | +0.37 |
+| 2022 | 77 | 11,342 | 34.2 | 25.6 | +0.48 |
+| 2023 | 105 | 16,796 | 34.0 | 25.0 | +0.45 |
+| 2024 | 128 | 22,048 | 32.6 | 24.6 | +0.16 |
+| 2025 | 166 | 24,017 | 33.0 | 24.4 | +0.12 |
+
+Practitioners more than doubled, and **whiff rate, CSW and run value all declined as the pitch spread** — the crowding-out mechanism from the scarcity panel, playing out at family scale. Two supporting details:
+
+- **Adopters cannibalized their changeups.** Pitchers picking up a splitter cut their changeup usage by 3–6 percentage points in the adoption year — the splitter boom is partly a *substitution* within the offspeed niche, consistent with the "death of the changeup" discussion in the practitioner literature.
+- **The shape space is widening, not converging.** Splitter IVB dispersion rose from 2.9″ to 3.7″ across arsenals (+29%) — the signature of a niche being colonized by newcomers trying different versions, the opposite of the mature-pitch pattern.
+
+![Splitters and the deathball](figures/fig15_splitter_deathball.png)
+
+### The deathball: a scarce cell being deliberately farmed
+
+The "deathball" — practitioner shorthand popularized around 2024 (Ryne Nelson, Roki Sasaki) for a hard gyro slider with near-zero horizontal break and several inches of depth — is invisible to family-level analysis because Statcast files it under SL. It is exactly what this study says should exist: a deliberately-targeted scarce shape cell. Operationalized here as slider-family, ≥85 mph, |HB| ≤ 3″, IVB ≤ −2″ (strict: |HB| ≤ 2″, IVB ≤ −4″):
+
+| Season | Deathballs | Pitchers | Share of sliders | Whiff edge vs other sliders | RV edge |
+|---|---|---|---|---|---|
+| 2021 | 2,541 | 132 | 1.85% | +3.7pp | +0.45 |
+| 2023 | 3,386 | 163 | 2.10% | +6.9pp | +0.22 |
+| 2024 | 3,222 | 170 | 2.01% | +6.2pp | +0.60 |
+| 2025 | 3,363 | 187 | 2.10% | +5.2pp | +0.11 |
+
+The pitch out-whiffs ordinary sliders by 4–7 points, practitioner count is climbing steadily (132 → 187), and — right on schedule — **the whiff edge peaked in 2023 and has declined in each season since** as adoption spreads. Leading 2025 practitioners: Luke Jackson (323), Griffin Canning (215), Grant Holmes (180, 45.2% whiff), Clay Holmes, Garrett Whitlock.
+
+---
+
+## Sequencing and count: the variables the first pass ignored
+
+Count entered the earlier models only as a control, and pitch-to-pitch sequencing not at all. Both get direct treatment here.
+
+### Within at-bat contrast does not buy whiffs
+
+If pitches are converging on templates, the natural counter-move is contrast *between* consecutive pitches. So for 2.63 million pitches with a predecessor in the same at-bat, a standardized shape gap (velocity, IVB, HB) was computed against the previous pitch and put through the same within-batter machinery as the familiarity study — batter fixed effects, count-state, family, location and current-shape controls.
+
+| Variable | Whiff effect | p | CSW effect | p |
 |---|---|---|---|---|
-| 2021 | 604 | 20.5 | 11.2 | +0.63 |
-| 2022 | 596 | 21.3 | 13.0 | +0.13 |
-| 2023 | 564 | 22.4 | 10.8 | +0.36 |
-| 2024 | 640 | 24.9 | 13.1 | +0.45 |
-| 2025 | 729 | 24.6 | 11.5 | **+1.42** |
+| Shape gap from previous pitch | **−0.32pp per unit** | <0.001 | −0.22pp | <0.001 |
+| Exact shape-cell repeat | **+0.29pp** | 0.019 | +0.51pp | <0.001 |
 
-He gets fewer whiffs than almost any reliever alive and is consistently effective anyway — and after five years of public data, essentially nobody has copied him. If unusual pitches were merely a statistical artifact, Rogers would have regressed. Instead his most extreme season was his best.
+Both signs run *against* conventional sequencing wisdom: bigger contrast with the previous pitch predicts slightly **fewer** whiffs (holding the current pitch's own quality fixed), and repeating the exact same shape twice in a row is mildly **good**, not bad. The novelty that matters is measured in days and games (the −0.42pp per doubling of 30-day exposure), not in seconds within an at-bat — hitters apparently expect change, and doubling up exploits that expectation. This aligns with published times-through-order work showing familiarity is cumulative rather than momentary.
+
+![Sequencing and count](figures/fig16_sequencing.png)
+
+### The outlier advantage exists in every count — and is barely exploited
+
+Merging each pitch's arsenal-level uniqueness onto the pitch grain and re-running the within-batter whiff model separately by count state:
+
+| Count state | Uniqueness whiff effect | p |
+|---|---|---|
+| Batter ahead | +1.83pp | <0.001 |
+| Even | +2.99pp | <0.001 |
+| Pitcher ahead | +2.88pp | <0.001 |
+| Two strikes | +2.52pp | <0.001 |
+
+The advantage is significant everywhere, largest in even and pitcher-ahead counts, smallest when the batter is ahead (when hitters can sit on a zone and shape quality matters less than location).
+
+Deployment, however, is nearly flat: outlier-decile pitches make up 19.9% of pitches when the batter is ahead and 20.7% with two strikes — a tilt of less than one percentage point toward putaway situations. Given a whiff edge that holds in every count, **unusual pitches look underused everywhere, not just saved for strikeouts** — the deployment side of the neglected-niche argument.
 
 ---
 
 ## What this means
 
 1. **The homogenization is real but local.** Pitchers converge on the template for their pitch, and arrive already conforming. What is not shrinking is the number of templates.
-2. **Crowding degrades a pitch.** The same shape allows harder contact as more pitchers throw it. Popularity is self-limiting, and the sweeper's value decline as usage rose is the visible case.
-3. **Novelty is a real, decaying asset.** Its value is measurable (−0.42pp whiff per doubling of exposure) and it decays fastest for the pitches that depend on it most.
-4. **The practical opportunity is scarcity, not weirdness for its own sake.** Uniqueness added no predictive signal beyond shape — so the edge is not "be strange," it is "occupy a shape hitters are not currently seeing." The abandoned-niche table lists specific candidates: sinker and cutter cells that lost half their usage while still outperforming league average.
+2. **Crowding degrades a pitch.** The same shape allows harder contact as more pitchers throw it. Popularity is self-limiting — the sweeper's value decline as usage rose, the splitter boom's fading whiff rate, and the deathball's shrinking edge are three live cases at three different scales.
+3. **Novelty is a real, decaying asset — measured in days, not pitches.** Its value shows up in 15–60-day exposure windows (−0.42pp whiff per doubling) and decays fastest for the pitches that depend on it most. Within a single at-bat the logic inverts: contrast with the previous pitch buys nothing, and exact repetition is mildly good. Hitters expect change; they adapt to shapes over weeks.
+4. **The practical opportunity is scarcity, not weirdness for its own sake.** Uniqueness added no predictive signal beyond shape — so the edge is not "be strange," it is "occupy a shape hitters are not currently seeing." The abandoned-niche table lists specific candidates: sinker and cutter cells that lost half their usage while still outperforming league average. The offspeed families supply most conventional-slot unicorns (Williams, Webb, Bednar, Avila), suggesting changeup/splitter shape space is where template-resistant variation still lives.
+5. **Unusual pitches are underdeployed in every count.** The outlier whiff advantage is significant in all four count states, yet outlier-decile pitches are thrown barely one percentage point more often with two strikes than when behind. Deployment has not caught up to the edge.
 
 ---
 

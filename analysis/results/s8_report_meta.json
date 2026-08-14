@@ -1,5 +1,5 @@
 {
-  "git_sha": "46583c3",
+  "git_sha": "300f7c3",
   "total_pitches": 3567640,
   "figures": [
     "fig01_dispersion_trends.png",
@@ -9,7 +9,9 @@
     "fig08_ecology.png",
     "fig10_uniqueness_gradient.png",
     "fig13_niches.png",
-    "fig14_familiarity.png"
+    "fig14_familiarity.png",
+    "fig15_splitter_deathball.png",
+    "fig16_sequencing.png"
   ],
   "results_tables": [
     "s0_handedness_check.csv",
@@ -34,6 +36,7 @@
     "s5_decile_gradient.csv",
     "s5_gbm_incremental.csv",
     "s5_gbm_pdp.csv",
+    "s5_most_unusual_conventional.csv",
     "s5_most_unusual_pitches.csv",
     "s5_spline_models.csv",
     "s5_within_between.csv",
@@ -42,6 +45,16 @@
     "s6_scarcity_regression.csv",
     "s7_exposure_bins.csv",
     "s7_familiarity_models.csv",
-    "s7_window_sensitivity.csv"
+    "s7_window_sensitivity.csv",
+    "s8_deathball_by_year.csv",
+    "s8_deathball_contrast.csv",
+    "s8_deathball_practitioners.csv",
+    "s8_splitter_adopters.csv",
+    "s8_splitter_by_year.csv",
+    "s8_splitter_dispersion.csv",
+    "s9_gap_bins.csv",
+    "s9_outlier_usage_by_count.csv",
+    "s9_sequencing_models.csv",
+    "s9_uniqueness_by_count.csv"
   ]
 }

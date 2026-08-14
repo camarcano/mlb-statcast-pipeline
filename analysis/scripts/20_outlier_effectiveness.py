@@ -352,6 +352,30 @@ def main() -> None:
         "s5_most_unusual_pitches",
     )
 
+    # The overall ranking is owned by delivery outliers (submariners score
+    # 20+ on release geometry alone). Two companion views separate "throws
+    # from a strange place" from "throws a strange pitch": a movement-only
+    # uniqueness score (velocity, IVB, HB, spin -- no release features), and
+    # the same ranking restricted to conventional arm slots.
+    move_feats = [f for f in ["release_speed", "ivb", "hb_arm",
+                              "release_spin_rate"] if f in feats]
+    move_scored = U.score_arsenal(arsenal, move_feats)
+    move_scored["pitcher_name"] = (
+        move_scored["pitcher"].map(D.pitcher_name_map())
+        .fillna(move_scored["pitcher"].astype(str)))
+    move_scored = move_scored.merge(
+        scored[["pitcher", "family", "game_year", "whiff_pct_eb",
+                "csw_pct_eb", "rv100_eb", "xwobacon_eb"]],
+        on=["pitcher", "family", "game_year"], how="left")
+    conventional = move_scored[move_scored["arm_angle"].between(10, 60)]
+    D.save_result(
+        conventional[["pitcher", "pitcher_name", "family", "game_year",
+                      "pitches", "arm_angle", "uniq_maha",
+                      "whiff_pct_eb", "csw_pct_eb", "rv100_eb", "xwobacon_eb"]]
+        .sort_values("uniq_maha", ascending=False).head(60).round(4),
+        "s5_most_unusual_conventional",
+    )
+
     dec, contrasts = decile_gradient(scored, reps)
     D.save_result(dec, "s5_decile_gradient")
     D.save_result(contrasts, "s5_decile_contrasts")
