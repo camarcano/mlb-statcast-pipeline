@@ -1,25 +1,20 @@
-"""S10 - Out-of-sample check: does the 2026 season behave as predicted?
+"""S10 - Does the newest season continue each trend, or turn?
 
-The five-season report made directional claims. This script scores them against
-a season that was not available when they were made, which is a genuine
-out-of-sample test rather than a refit.
+Trends estimated across a pooled window can hide a turning point in the most
+recent season, which matters here: the study argues that crowding degrades a
+pitch, and the natural consequence is that a crowded pitch should eventually be
+abandoned rather than adopted forever. This script scores the year-specific
+series -- convergence, newcomer typicality, family usage, and the two live
+recolonizations -- on whether the final season extends the prior direction.
 
-Two rules keep the comparison honest:
+Only claims with a per-season value are scored. The pooled regressions
+(scarcity, familiarity, uniqueness by count) are fit across every season at
+once and have no separate final-season estimate to compare, so they are read
+from their own study outputs rather than second-guessed here.
 
-* **Date matching.** The current season is incomplete, so every season in this
-  run is truncated at the same calendar day (SEASON_CUTOFF_MD). A raw
-  comparison of a partial season against full ones confounds "what changed"
-  with "August is not October" -- offspeed usage, velocity and roster
-  composition all drift late in a season.
-* **Direction, not magnitude.** Each claim is scored on whether the new season
-  continues the direction the report predicted, since a two-thirds season
-  carries wider error bars than the ones behind the original estimates.
-
-Run after the tagged pipeline, e.g.:
-
-    ANALYSIS_TAG=md2026 SEASON_CUTOFF_MD=08-13 \\
-    ANALYSIS_YEARS=2021,2022,2023,2024,2025,2026 \\
-    python analysis/scripts/25_season_check.py
+Note that the final season is still being played, so it is compared on a
+matched calendar window (SEASON_CUTOFF_MD) and on direction rather than
+magnitude.
 """
 from __future__ import annotations
 
@@ -83,36 +78,8 @@ def check_newcomers(rows: list) -> None:
     })
 
 
-def check_scarcity(rows: list) -> None:
-    d = read("s6_scarcity_regression")
-    if d.empty:
-        return
-    x = d[d["outcome"] == "xwobacon"]
-    if x.empty:
-        return
-    coef, p = float(x["scarcity_coef"].iloc[0]), float(x["p"].iloc[0])
-    rows.append({
-        "claim": "Crowding a shape degrades it (xwOBAcon)",
-        "prior_seasons": "+0.0106 per doubling, p=0.0011",
-        "new_season": f"{coef:+.4f} per doubling, p={p:.4g}",
-        "verdict": verdict(coef > 0 and p < 0.05),
-    })
 
 
-def check_familiarity(rows: list) -> None:
-    d = read("s7_familiarity_models")
-    if d.empty:
-        return
-    m = d[(d["outcome"] == "is_whiff") & (d["model"] == "main")]
-    if m.empty:
-        return
-    pp, p = float(m["pp_per_doubling"].iloc[0]), float(m["exposure_p"].iloc[0])
-    rows.append({
-        "claim": "Recent exposure blunts a pitch",
-        "prior_seasons": "-0.42pp whiff per doubling",
-        "new_season": f"{pp:+.2f}pp per doubling, p={p:.3g}",
-        "verdict": verdict(pp < 0 and p < 0.05),
-    })
 
 
 def check_splitters(rows: list) -> None:
@@ -161,17 +128,6 @@ def check_deathball(rows: list) -> None:
     })
 
 
-def check_outlier_by_count(rows: list) -> None:
-    d = read("s9_uniqueness_by_count")
-    if d.empty:
-        return
-    pos = (d["uniq_pct_coef"] > 0) & (d["uniq_pct_p"] < 0.05)
-    rows.append({
-        "claim": "Outlier advantage holds across count states",
-        "prior_seasons": "+1.8 to +3.0pp, all 4 counts",
-        "new_season": f"{int(pos.sum())}/{len(d)} counts positive and significant",
-        "verdict": verdict(bool(pos.all())),
-    })
 
 
 def check_ecology(rows: list) -> None:
@@ -243,9 +199,8 @@ def figure(scorecard: pd.DataFrame) -> None:
 
 def main() -> None:
     rows: list = []
-    for fn in (check_convergence, check_newcomers, check_scarcity,
-               check_familiarity, check_ecology, check_splitters,
-               check_deathball, check_outlier_by_count):
+    for fn in (check_convergence, check_newcomers, check_ecology,
+               check_splitters, check_deathball):
         try:
             fn(rows)
         except Exception as exc:  # pragma: no cover - defensive

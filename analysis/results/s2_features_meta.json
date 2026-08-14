@@ -1,35 +1,40 @@
 {
-  "git_sha": "46583c3",
+  "git_sha": "637ddca",
   "years": [
     2021,
     2022,
     2023,
     2024,
-    2025
+    2025,
+    2026
   ],
   "pitch_counts": [
     {
       "game_year": 2021,
-      "pitches": 708398
+      "pitches": 507563
     },
     {
       "game_year": 2022,
-      "pitches": 706250
+      "pitches": 496323
     },
     {
       "game_year": 2023,
-      "pitches": 715687
+      "pitches": 521697
     },
     {
       "game_year": 2024,
-      "pitches": 706753
+      "pitches": 523526
     },
     {
       "game_year": 2025,
-      "pitches": 707806
+      "pitches": 526794
+    },
+    {
+      "game_year": 2026,
+      "pitches": 534411
     }
   ],
-  "arsenal_rows": 9191,
+  "arsenal_rows": 9305,
   "shape_features": [
     "release_speed",
     "ivb",
@@ -43,34 +48,40 @@
   "arm_angle_included": true,
   "handedness_check": [
     {
-      "sinker_hb_arm_mean_R": 14.757284652734931,
-      "sinker_hb_arm_mean_L": 14.728411459884448,
+      "sinker_hb_arm_mean_R": 14.84921942001599,
+      "sinker_hb_arm_mean_L": 14.713086984126983,
       "passed": true,
       "game_year": 2021
     },
     {
-      "sinker_hb_arm_mean_R": 14.716109717989273,
-      "sinker_hb_arm_mean_L": 15.055129993658845,
+      "sinker_hb_arm_mean_R": 14.649763490068832,
+      "sinker_hb_arm_mean_L": 15.047198455806438,
       "passed": true,
       "game_year": 2022
     },
     {
-      "sinker_hb_arm_mean_R": 14.905886197520394,
-      "sinker_hb_arm_mean_L": 15.07147030435622,
+      "sinker_hb_arm_mean_R": 14.878178277049352,
+      "sinker_hb_arm_mean_L": 15.095220417633412,
       "passed": true,
       "game_year": 2023
     },
     {
-      "sinker_hb_arm_mean_R": 14.840552650662188,
-      "sinker_hb_arm_mean_L": 15.120493782663543,
+      "sinker_hb_arm_mean_R": 14.792810633264692,
+      "sinker_hb_arm_mean_L": 15.108027853565174,
       "passed": true,
       "game_year": 2024
     },
     {
-      "sinker_hb_arm_mean_R": 15.070113132548538,
-      "sinker_hb_arm_mean_L": 15.392279128512788,
+      "sinker_hb_arm_mean_R": 15.092901326475367,
+      "sinker_hb_arm_mean_L": 15.361030196899158,
       "passed": true,
       "game_year": 2025
+    },
+    {
+      "sinker_hb_arm_mean_R": 15.055774424931982,
+      "sinker_hb_arm_mean_L": 15.300588380021793,
+      "passed": true,
+      "game_year": 2026
     }
   ]
 }

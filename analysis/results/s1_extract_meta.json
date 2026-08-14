@@ -1,25 +1,29 @@
 {
-  "git_sha": "f9d7960",
+  "git_sha": "637ddca",
   "rows_by_year": [
     {
       "game_year": 2021,
-      "pitches": 709486
+      "pitches": 508461
     },
     {
       "game_year": 2022,
-      "pitches": 708116
+      "pitches": 497603
     },
     {
       "game_year": 2023,
-      "pitches": 717672
+      "pitches": 523075
     },
     {
       "game_year": 2024,
-      "pitches": 709224
+      "pitches": 525367
     },
     {
       "game_year": 2025,
-      "pitches": 709906
+      "pitches": 528419
+    },
+    {
+      "game_year": 2026,
+      "pitches": 536015
     }
   ],
   "columns": [

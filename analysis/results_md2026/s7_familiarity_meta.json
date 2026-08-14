@@ -1,9 +1,0 @@
-{
-  "git_sha": "e108be4",
-  "window_days": 30,
-  "sensitivity_windows": [
-    15,
-    60
-  ],
-  "rows": 2896362
-}

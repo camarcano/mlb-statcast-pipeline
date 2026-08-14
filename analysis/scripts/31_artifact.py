@@ -186,385 +186,333 @@ def section(num: str, title: str, verdict: str, verdict_cls: str,
 
 
 SECTIONS = [
-    section("1", "The league-wide spread held up", "Not supported", "no", body("""
-The most direct test of homogenisation asks whether the standard deviation of
-pitch shapes shrank. Pooling all eight shape features into a single tested
-number per family, with intervals from a 2,000-replicate bootstrap resampled by
-pitcher:
-
-| Family | Change in dispersion | 95% interval | p |
-|---|---|---|---|
-| Sinker | −7.5% | −18.0 to +8.3 | 0.32 |
-| Cutter | −4.5% | −11.9 to +5.2 | 0.39 |
-| Slider / Sweeper | −1.2% | −8.7 to +7.4 | 0.66 |
-| Curveball | −0.9% | −8.2 to +5.9 | 0.68 |
-| Changeup | +1.5% | −6.9 to +10.5 | 0.76 |
-| Four-seam | +3.0% | −4.6 to +10.2 | 0.44 |
-
-Nothing is significant. Four of six families lean toward narrowing, but every
-interval comfortably contains zero, and none of the 112 individual
-feature-by-family contrasts survive false-discovery correction.
-
-The multivariate version pushes slightly harder. Measuring the *volume* of
-occupied shape space, five of six families shrank, and pooling them gives
-−0.46 log-units (−0.95 to +0.07, p = 0.098) — roughly −5.6% per shape axis.
-Suggestive, not conclusive.
-""") + readout("−5.6%", "pooled shape-space volume per axis · p = 0.098")
-        + body("""
-Two caveats keep this honest. Splitters could not be tested at all — too few
-pitchers threw 100 of them in 2021. And with 150–500 pitchers per family-season,
-this design cannot resolve a 5% change in a standard deviation. **The null is
-weak evidence of absence, not evidence of absence.**
-""") + fig("fig02_dispersion_contrast",
-           "Change in league-wide spread by family and shape feature. "
-           "Bars left of zero indicate convergence; whiskers are 95% "
-           "pitcher-bootstrap intervals.")),
-
-    section("2", "But pitchers drift toward the middle every year",
+    section("1", "The spread: univariate null, multivariate signal",
             "Supported", "yes", body("""
-The population-level null hides a strong individual-level signal.
+The most direct test asks whether the standard deviation of pitch shapes shrank.
+Pooling all eight shape features into one tested number per family, with
+intervals from a 2,000-replicate bootstrap resampled by pitcher:
 
+| Family | Change in dispersion, 2021→2026 | 95% interval | p |
+|---|---|---|---|
+| Sinker | −11.9% | −23.6 to +6.0 | 0.22 |
+| Cutter | −4.9% | −14.3 to +4.4 | 0.30 |
+| Four-seam | −2.8% | −10.8 to +4.5 | 0.38 |
+| Curveball | −2.5% | −11.5 to +5.7 | 0.42 |
+| Slider / Sweeper | −1.4% | −9.4 to +8.5 | 0.69 |
+| Changeup | +5.5% | −4.9 to +15.4 | 0.34 |
+
+No family is individually significant. Five of six now lean toward narrowing,
+but every interval contains zero.
+
+The multivariate test is where the signal lives. Measuring the *volume* of
+occupied shape space, five of six families contracted, and pooling them gives a
+result that on five seasons was only suggestive (−5.6%, p = 0.098):
+""") + readout("−8.7% per axis", "pooled shape-space volume, 2021→2026 · p = 0.017")
+        + body("""
+The sixth season pushed this past significance and increased the effect.
+Cutters (−14.6%, p = 0.060) and four-seams (−9.5%, p = 0.054) contracted most.
+The two tests do not contradict: individual features can hold their spread while
+the *joint* distribution tightens, which is what happens when pitchers converge
+on particular combinations rather than particular values.
+""") + fig("fig02_dispersion_contrast",
+           "Change in league-wide spread by family and shape feature. Bars left "
+           "of zero indicate convergence; whiskers are 95% pitcher-bootstrap "
+           "intervals. Each panel sets its own horizontal scale.")),
+
+    section("2", "Pitchers drift toward the middle, every year",
+            "Supported", "yes", body("""
 For every pitcher appearing in consecutive seasons, I measured whether his
 year-over-year movement in shape space pointed toward the league centre.
-Measurement noise alone manufactures fake convergence — a pitcher with a
-lucky-high spin reading one year will "regress" the next — so starting position
-was measured on one half of his pitches and movement on the other, then
-benchmarked against a within-season null built the same way.
+Measurement noise alone manufactures fake convergence, so starting position was
+measured on one half of his pitches and movement on the other, then benchmarked
+against a within-season null built the same way.
 
 | Seasons | Movement toward centre | Share converging | Noise baseline |
 |---|---|---|---|
-| 2021 → 2022 | +0.143 | 65.7% | 54.0% |
-| 2022 → 2023 | +0.162 | 66.8% | 53.8% |
-| 2023 → 2024 | +0.120 | 61.2% | 53.0% |
-| 2024 → 2025 | +0.121 | 62.0% | 51.7% |
+| 2021 → 2022 | +0.164 | 64.0% | 53.4% |
+| 2022 → 2023 | +0.155 | 66.9% | 53.0% |
+| 2023 → 2024 | +0.120 | 61.3% | 49.9% |
+| 2024 → 2025 | +0.115 | 62.4% | 53.1% |
+| 2025 → 2026 | +0.182 | 68.9% | 56.7% |
 
-Four seasons out of four. About two-thirds of pitchers drift toward the
-league-average version of their own pitch, against a noise baseline near 52%.
-The null sitting close to zero is what makes the signal believable.
-""") + readout("62–67%", "of pitchers converge each season · baseline ≈ 52%")
-        + body("""
-### The new arrivals are already typical
+Five seasons out of five, and the newest is the strongest in the window. The
+null sitting near zero is what makes the signal believable.
 
-If incumbents converge but league-wide spread holds, something must refill the
-edges. The obvious candidate is turnover — rookies arriving with strange,
-unpolished deliveries.
+### Arrivals are already typical
 
-That is not what happens. Pitchers in their debut season sit **closer** to the
-centre of their family than established pitchers (median −3.6%, paired
-p = 0.019); 2024 debutants were 13% closer. Arrivals are *more* league-standard,
-not less. The development pipeline is not merely polishing pitchers once they
-reach the majors — it is delivering them pre-conformed.
+If incumbents converge, something must refill the edges — the obvious candidate
+being rookies with strange, unpolished deliveries. That is not what happens.
+Debut-season pitchers sit **closer** to the centre of their family than
+established ones (median −5.0%, paired p = 0.0012). The development pipeline is
+not merely polishing pitchers once they arrive; it is delivering them
+pre-conformed.
 
-### Yet arsenals grew broader
+### Yet arsenals got broader
 
-Cutting against all of the above, pitchers now throw more distinct pitch types,
-more evenly — monotonically, in every season.
-
-| | 2021 | 2025 |
+| | 2021 | 2026 |
 |---|---|---|
-| Usage entropy | 0.996 | 1.108 |
-| Families thrown ≥5% | 3.15 | 3.47 |
-| Share of top pitch | 49.0% | 43.3% |
+| Usage entropy | 0.972 | 1.137 |
+| Families thrown ≥5% | 3.08 | 3.56 |
+| Share of top pitch | 48.9% | 41.3% |
 
-So "homogenisation" is the wrong word at the arsenal level: variety *within* a
-pitcher is rising even as each individual pitch converges on a template. Both
-are true at once, and only the second is homogenisation.
+Monotone in every season. So "homogenisation" is the wrong word at the arsenal
+level: variety *within* a pitcher is rising even as each individual pitch
+converges on a template. Only the second is homogenisation.
 """) + fig("fig06_convergence",
            "Crowding of the shape space and year-over-year movement toward the "
            "league centre, against the split-half noise benchmark.")),
 
     section("3", "Popular shapes get punished", "Supported", "yes", body("""
-Pitch usage shifted substantially, and value moved against it. The two pitches
-that gained the most usage both lost the most value, while the most-abandoned
-pitch improved.
-
-| Family | Usage 2021 → 2025 | Change in relative run value |
+| Family | Usage 2021 → 2026 | Relative run value |
 |---|---|---|
-| Four-seam | 35.6% → 32.0% (−3.6pp) | +0.089 better |
-| Slider / Sweeper | 19.4% → 22.6% (+3.2pp) | −0.218 worse |
-| Splitter | 1.6% → 3.4% (+1.8pp) | −0.252 worse |
-| Curveball | 9.6% → 8.5% (−1.1pp) | −0.247 worse |
-| Changeup | 11.3% → 10.3% (−0.9pp) | +0.072 better |
-| Sinker | 15.3% → 15.6% (+0.3pp) | +0.230 better |
-| Cutter | 7.3% → 7.6% (+0.3pp) | −0.217 worse |
+| Four-seam | 35.2% → 30.7% (−4.6pp) | −0.147 → −0.002 (better) |
+| Curveball | 9.7% → 8.0% (−1.7pp) | −0.050 → −0.401 (worse) |
+| Changeup | 11.3% → 11.2% (−0.1pp) | −0.170 → +0.011 (better) |
+| Cutter | 7.3% → 7.9% (+0.6pp) | +0.120 → −0.075 (worse) |
+| Sinker | 15.5% → 16.7% (+1.2pp) | −0.014 → +0.232 (better) |
+| Splitter | 1.6% → 3.3% (+1.7pp) | +0.302 → +0.060 (worse) |
+| Slider / Sweeper | 19.4% → 22.2% (+2.8pp) | +0.334 → −0.014 (worse) |
 
-Across seven families the rank correlation is −0.32, which on its own proves
-nothing. So the same question was asked at a far finer grain: divide each
-family's shape space into cells of 2 mph × 4″ vertical break × 4″ horizontal
-break, and ask whether **the same cell** performs worse in seasons when more
-pitchers occupy it. Cell and year fixed effects absorb both "some shapes are
-simply better" and league-wide run-environment drift. 240 cells, 1,200
-cell-seasons.
+The sweeper is the cleanest case in the dataset: its relative run value fell
+**monotonically for six straight seasons** — +0.334, +0.265, +0.184, +0.162,
++0.035, −0.014 — as usage climbed 2.8 points. It is now, for the first time, a
+below-average pitch by run value.
 
-| Outcome | Effect of doubling a shape's usage | p | Survives FDR |
-|---|---|---|---|
-| xwOBA on contact | +0.0073 worse | 0.0011 | yes |
-| Whiff rate | −0.40pp worse | 0.114 | no |
-| Run value / 100 | −0.02 worse | 0.765 | no |
-| CSW rate | +0.22pp better | 0.231 | no |
-""") + readout("+0.0073", "xwOBAcon penalty per doubling of a shape's usage · p = 0.0011", warm=True)
+Seven families is too small a sample to test this properly, so the same question
+was asked at a far finer grain: divide each family's shape space into cells
+(2 mph × 4″ vertical break × 4″ horizontal break) and ask whether **the same
+cell** performs worse in seasons when more pitchers occupy it. Cell and year
+fixed effects absorb both "some shapes are simply better" and run-environment
+drift.
+
+| Outcome | Effect of doubling a shape's usage | p |
+|---|---|---|
+| xwOBA on contact | +0.0089 worse | 0.036 |
+| Whiff rate | −0.47pp (worse) | 0.233 |
+| CSW rate | +0.31pp (better) | 0.276 |
+| Run value / 100 | +0.08 (better) | 0.490 |
+""") + readout("+0.0089", "xwOBAcon penalty per doubling of a shape's usage · p = 0.036", warm=True)
         + body("""
-This is the study's cleanest result: **when a pitch shape becomes more common,
-hitters square it up harder** — holding the shape itself constant. Halving a
-shape's usage is worth about seven points of xwOBAcon. The other three outcomes
-lean the same way without clearing significance.
+When a pitch shape becomes more common, hitters square it up harder — holding
+the shape itself constant. One methodological note stated plainly: the 500-pitch
+cell threshold was designed for full seasons, and on a truncated window it
+retains only 164 cells. Rescaling it to the window (370 pitches, 230 cells)
+gives +0.0094 at p = 0.0088, which clears FDR correction. The coefficient is
+unchanged; the difference is precision, not signal. The pre-specified 500
+remains the headline.
 """) + fig("fig13_niches",
            "Shape cells that lost usage while still outperforming league "
            "average, and the within-cell relationship between scarcity and value.")),
 
     section("4", "Unusual pitches really do work better", "Supported", "yes", body("""
-Every arsenal was scored for how far it sits from its family's league
-distribution that season, using a robust Mahalanobis distance cross-checked
-against a nearest-neighbour density score. Comparing the most unusual decile
-against the most typical:
+Each arsenal was scored for how far it sits from its family's league
+distribution that season (robust Mahalanobis distance, cross-checked against a
+nearest-neighbour density score).
 
-| Outcome | Most typical | Most unusual | Difference |
+| Outcome | Most typical decile | Most unusual decile | Difference |
 |---|---|---|---|
-| Whiff rate | 23.55% | 24.70% | +1.15pp |
-| CSW rate | 27.41% | 28.19% | +0.77pp |
-| Run value / 100 | 0.077 | 0.132 | +0.055 |
-| xwOBA on contact | 0.313 | 0.307 | −0.005 |
+| Whiff rate | 23.22% | 24.38% | +1.16pp |
+| CSW rate | 27.42% | 28.22% | +0.81pp |
+| Run value / 100 | 0.099 | 0.169 | +0.070 |
+| xwOBA on contact | 0.313 | 0.307 | −0.006 |
 
-All four favour the outliers. The obvious objection is selection: perhaps good
-pitchers simply throw unusual pitches. To separate the two, uniqueness was split
-into a between-pitcher component (a pitcher's career-average strangeness) and a
-within-pitcher component (his own season-to-season deviation), with
-pitcher-by-family fixed effects absorbed by demeaning.
+The obvious objection is selection: perhaps good pitchers simply throw unusual
+pitches. Splitting uniqueness into a between-pitcher component (career-average
+strangeness) and a within-pitcher one (season-to-season deviation), with
+pitcher-by-family fixed effects absorbed by demeaning:
 
 | Outcome | Within-pitcher | Between-pitcher |
 |---|---|---|
-| Whiff rate | +1.762 (p<0.0001) | +1.766 (p<0.0001) |
-| CSW rate | +0.831 (p=0.0001) | +0.972 (p<0.0001) |
-| xwOBA on contact | −0.0055 (p=0.005) | −0.0064 (p<0.0001) |
-| Run value / 100 | +0.054 (p=0.098) | +0.074 (p=0.0001) |
-""") + readout("1.762 vs 1.766", "within- and between-pitcher whiff effect · not selection")
-        + body("""
-The within- and between-pitcher whiff coefficients are **essentially
-identical**. When the same pitcher's pitch drifts from the league norm, it
-misses more bats by the same margin that separates unusual pitchers from typical
-ones. This is not a story about which pitchers own weird pitches.
+| Whiff rate | +1.426 (p<0.0001) | +1.775 (p<0.0001) |
+| CSW rate | +0.571 (p=0.0025) | +0.912 (p<0.0001) |
+| xwOBA on contact | −0.0046 (p=0.009) | −0.0064 (p<0.0001) |
+| Run value / 100 | +0.024 (p=0.49) | +0.084 (p=0.0001) |
+
+The within-pitcher whiff effect is 80% the size of the between-pitcher one and
+independently significant. When the same pitcher's pitch drifts from the league
+norm it misses more bats — which selection cannot explain, because the pitcher
+is held fixed by construction. Run value is the honest exception: it does not
+move within-pitcher, which is what noisy per-pitch run value looks like even
+after shrinkage.
 
 ### One important negative
 
 A gradient-boosting model predicting whiffs from velocity, movement, location
-and count was fit twice on 1.2 million swings — with and without the uniqueness
-score. Adding it changed log-loss by +0.0001 and AUC by −0.0002. Nothing.
+and count was fit twice on 1.2 million swings, with and without the uniqueness
+score. Adding it changed log-loss by +0.00008 and AUC by −0.0001. Nothing.
 
 That clarifies rather than contradicts. Uniqueness is a deterministic function
 of the shape features, so a flexible model given those features has already
 extracted whatever it encodes. Being an outlier is not *extra* information on
-top of your shape; it is a particular summary of your shape that tracks
-effectiveness. The actionable claim survives. The claim that "unusual" is
-independently predictive does not.
+top of your shape; it is a particular summary of it that tracks effectiveness.
 """) + fig("fig10_uniqueness_gradient",
-           "Outcomes across uniqueness deciles, with pitcher-bootstrap "
-           "intervals, and the fitted spline relationship.")),
+           "Outcomes across uniqueness deciles with pitcher-bootstrap intervals, "
+           "and the fitted spline relationship.")),
 
     section("5", "Why it works: hitters adapt to what they see",
             "Supported", "yes", body("""
-The mechanism evidence comes from the batter's side. For every pitch I counted
-how many pitches of that same shape the hitter had faced in the previous 30
-days, then estimated the effect **within batter** — comparing each hitter's own
-well-prepared and poorly-prepared moments, with count, location and shape
-controls. 3.36 million pitches, 825 hitters.
+For every pitch I counted how many pitches of that same shape the hitter had
+faced in the previous 30 days, then estimated the effect **within batter** —
+comparing each hitter's own well-prepared and poorly-prepared moments, with
+count, location and shape controls. 2.90 million pitches, 830 hitters.
 
 | Outcome | Effect of doubling recent exposure | p |
 |---|---|---|
-| Whiff per swing | −0.42pp | <0.00001 |
-| CSW | −0.25pp | <0.00001 |
-
-Familiarity blunts a pitch, and the estimate barely moves when the window
-changes to 15 days (−0.41pp) or 60 days (−0.43pp).
-""") + readout("−0.42pp", "whiff rate per doubling of a hitter's recent exposure", warm=True)
+| Whiff per swing | −0.46pp | <10⁻²⁸ |
+| CSW | −0.27pp | <10⁻¹⁵ |
+""") + readout("−0.46pp", "whiff rate per doubling of a hitter's recent exposure", warm=True)
         + body("""
-The interaction is the clincher: the exposure penalty is **larger for more
-unusual pitches** (−0.0057, p = 0.0013 for whiffs; −0.0047, p = 0.0002 for CSW).
-A common shape has little novelty to lose. An unusual one has a great deal, and
-loses it as hitters see it.
+The estimate barely moves when the window changes to 15 days (−0.46pp) or 60
+days (−0.45pp). And the interaction is the clincher: the exposure penalty is
+**larger for more unusual pitches** (−0.0049, p = 0.012 for whiffs; −0.0043,
+p = 0.003 for CSW). A common shape has little novelty to lose; an unusual one
+has a great deal, and loses it as hitters see it.
 
-That is precisely the proposed mechanism, and it explains the crowding-out
-result: as a shape spreads, every hitter's recent exposure to it rises, and its
-advantage erodes.
+That is the proposed mechanism, and it explains crowding-out: as a shape
+spreads, every hitter's recent exposure to it rises and its advantage erodes.
 """) + fig("fig14_familiarity",
            "Whiff rate against recent exposure to the same shape, split by how "
            "unusual the pitch is, with the controlled within-batter estimate.")),
 
-    section("6", "The existence proofs: two kinds of outlier", "", "", body("""
+    section("6", "Two kinds of outlier", "", "", body("""
 Uniqueness has two ingredients that should not be conflated: throwing from a
 strange **place**, and throwing a strange **pitch**.
 
-The overall ranking is owned by the first kind. Tyler Rogers' submarine sinker
-— released at 1.2 ft with a −61° arm angle, against a league norm of 5.6 ft and
-+33° — sits 20–25 standard units from the league centre and has been effective
-for five straight seasons (positive run value every year; his most extreme
-season, 2025, was his best at +1.42 per 100). But he is a *delivery* outlier:
-that uniqueness comes bundled with the whole submarine mechanic, which is not
-transferable advice.
+The overall ranking is owned by the first kind. Tyler Rogers' submarine sinker —
+released at 1.2 ft with a −61° arm angle, against a league norm of 5.6 ft and
++33° — sits 20–25 standard units from the centre and has been effective every
+season. But he is a *delivery* outlier: that uniqueness comes bundled with the
+whole submarine mechanic, which is not transferable advice.
 
-So the ranking was recomputed on **movement only** — velocity, vertical and
-horizontal break, spin — restricted to conventional arm slots between 10° and
-60°. This is the actionable list: strange pitches thrown from ordinary places.
+Recomputing on **movement only** — velocity, vertical and horizontal break,
+spin — restricted to conventional arm slots (10°–60°) gives the actionable list.
 
 | Pitcher | Pitch | Season | Arm slot | Dist. from centre | Whiff% | RV/100 |
 |---|---|---|---|---|---|---|
-| Matt Andriese | Changeup | 2021 | 43.7° | 10.6 | 24.7 | −0.05 |
-| Pedro Avila | Changeup | 2023 | 40.6° | 9.2 | 39.1 | +0.87 |
-| David Bednar | Splitter | 2021 | 34.6° | 8.6 | 35.2 | +1.01 |
-| Devin Williams | Changeup ("Airbender") | 2021 | 23.0° | 8.0 | 42.9 | −0.05 |
-| Camilo Doval | Cutter | 2023 | 17.5° | 8.0 | 26.2 | +0.35 |
-| Logan Allen | Changeup | 2023 | 42.0° | 7.7 | 30.5 | +0.75 |
-| César Valdez | Changeup ("dead fish") | 2021 | 10.6° | 7.6 | 28.7 | −0.05 |
-| Logan Webb | Changeup | 2022 | 12.5° | 7.4 | 25.0 | +0.85 |
+| Matt Andriese | Changeup | 2021 | 44.0° | 10.3 | 24.0 | +0.12 |
+| Logan Allen | Changeup | 2023 | 42.5° | 9.1 | 30.4 | +0.96 |
+| Pedro Avila | Changeup | 2024 | 45.4° | 8.9 | 31.0 | +0.01 |
+| Collin Snider | Four-seam | 2025 | 15.9° | 8.0 | 17.1 | +0.26 |
+| Devin Williams | Changeup ("Airbender") | 2021 | 23.4° | 7.7 | 42.1 | +0.12 |
+| Trevor Richards | Changeup | 2024 | 49.5° | 7.4 | 29.3 | +0.01 |
+| Camilo Doval | Cutter | 2023 | 18.2° | 7.3 | 25.6 | +0.70 |
+| Logan Webb | Changeup | 2022 | 12.8° | 7.2 | 25.5 | +0.58 |
 
-Two patterns stand out. The league's strangest conventional-slot pitches are
-overwhelmingly **changeups and splitters** — offspeed shapes that resist the
-spin-based design templates. And the pitches the industry already celebrates as
-unicorns (the Airbender, Webb's changeup, Bednar's splitter) fall out of the
-arithmetic on their own — a sanity check that the score measures what it claims
-to. The within-pitcher regression in the previous section is the systematic
-version of this table; the effect depends on no single example.
+The league's strangest conventional-slot pitches are overwhelmingly
+**changeups** — the offspeed shape that most resists spin-based design
+templates. And the pitches the industry already celebrates as unicorns (the
+Airbender, Webb's changeup) fall out of the arithmetic on their own, a sanity
+check that the score measures what it claims to.
 """)),
 
-    section("6b", "Two recolonizations, happening now", "Supported", "yes", body("""
-The scarcity thesis predicts that neglected shapes get rediscovered, work well
-early, and erode as they crowd. Two current cases let us watch it live.
+    section("7", "Two recolonizations in progress", "Supported", "yes", body("""
+### Splitters: the boom crested
 
-### Splitters: the boom is already paying the crowding tax
+| Season | Pitchers | Whiff% | CSW% | RV/100 |
+|---|---|---|---|---|
+| 2021 | 72 | 35.5 | 26.0 | +0.32 |
+| 2022 | 70 | 34.0 | 25.6 | +0.51 |
+| 2023 | 93 | 34.0 | 25.1 | +0.47 |
+| 2024 | 116 | 32.5 | 24.4 | +0.04 |
+| 2025 | 151 | 32.5 | 24.1 | +0.15 |
+| 2026 | 136 | 32.7 | 24.3 | +0.07 |
 
-| Season | Pitchers | Pitches | Whiff% | CSW% | RV/100 |
-|---|---|---|---|---|---|
-| 2021 | 75 | 11,448 | 35.8 | 26.1 | +0.37 |
-| 2022 | 77 | 11,342 | 34.2 | 25.6 | +0.48 |
-| 2023 | 105 | 16,796 | 34.0 | 25.0 | +0.45 |
-| 2024 | 128 | 22,048 | 32.6 | 24.6 | +0.16 |
-| 2025 | 166 | 24,017 | 33.0 | 24.4 | +0.12 |
+Practitioners doubled through 2025 while whiff rate, CSW and run value all fell
+— then in 2026 the practitioner count **declined for the first time**. Adopters
+cut their changeup usage by 3–6 points in the adoption year, so the boom was
+partly substitution inside the offspeed niche.
 
-Practitioners more than doubled; whiff rate, CSW and run value all fell as the
-pitch spread. Adopters cut their changeup usage by 3–6 percentage points in the
-adoption year — the boom is partly substitution inside the offspeed niche — and
-splitter shape dispersion *widened* (IVB spread +29%), the signature of a niche
-being colonized by newcomers trying different versions.
+### The deathball: a scarce cell being farmed
 
-### The deathball: a scarce cell being deliberately farmed
-
-The "deathball" — practitioner shorthand popularized around 2024 (Ryne Nelson,
+The "deathball" — practitioner shorthand popularised around 2024 (Ryne Nelson,
 Roki Sasaki) for a hard gyro slider with near-zero horizontal break and several
 inches of depth — is invisible to family-level analysis because Statcast files
-it under SL. It is precisely what this study says should exist: a scarce shape
-cell being deliberately targeted. Operationalized as slider-family, ≥85 mph,
-|HB| ≤ 3″, IVB ≤ −2″:
+it under SL. Operationalised as slider-family, ≥85 mph, |HB| ≤ 3″, IVB ≤ −2″:
 
 | Season | Deathballs | Pitchers | Whiff edge vs other sliders | RV edge |
 |---|---|---|---|---|
-| 2021 | 2,541 | 132 | +3.7pp | +0.45 |
-| 2023 | 3,386 | 163 | +6.9pp | +0.22 |
-| 2024 | 3,222 | 170 | +6.2pp | +0.60 |
-| 2025 | 3,363 | 187 | +5.2pp | +0.11 |
-""") + readout("+5 to +7pp", "deathball whiff edge over ordinary sliders — peaking 2023, eroding since")
-        + body("""
-The pitch out-whiffs ordinary sliders by four to seven points, practitioner
-count climbs every season — and, right on schedule, the edge peaked in 2023 and
-has shrunk each year since as adoption spreads. Leading 2025 practitioners:
-Luke Jackson (323), Griffin Canning (215), Grant Holmes (180, 45.2% whiff),
-Clay Holmes, Garrett Whitlock.
+| 2023 | 2,281 | 139 | +7.9pp | +0.37 |
+| 2024 | 2,275 | 135 | +4.4pp | +0.46 |
+| 2025 | 2,574 | 159 | +5.8pp | +0.31 |
+| 2026 | 3,637 | 168 | +7.6pp | +0.65 |
+
+The pitch out-whiffs ordinary sliders by four to eight points and adoption
+jumped sharply in 2026. Unlike the sweeper, **its edge has not eroded** — across
+four seasons it oscillates with no detectable trend, and an earlier reading of
+this series as "peaked in 2023, declining since" over-fitted three noisy points.
+Leading 2026 practitioners: Cristopher Sánchez (278, 47.9% whiff), Logan Gilbert
+(244), Grant Holmes (205, 50.5%), Griffin Canning, and Roki Sasaki — the
+definition is picking up the pitchers the practitioner literature names.
 """) + fig("fig15_splitter_deathball",
            "Splitter adoption and whiff decline, and the deathball's share of "
-           "slider-family pitches, 2021–2025.")),
+           "slider-family pitches.")),
 
-    section("6c", "Sequencing and count", "Partial", "partial", body("""
-Count entered the earlier models only as a control, and pitch-to-pitch
-sequencing not at all. Both get direct treatment here — and the sequencing
-result runs against conventional wisdom.
-
+    section("8", "Sequencing and count", "Partial", "partial", body("""
 ### Within-at-bat contrast does not buy whiffs
 
-For 2.63 million pitches with a predecessor in the same at-bat, a standardized
-shape gap (velocity, IVB, HB) was computed against the previous pitch and put
-through the same within-batter machinery as the familiarity study — batter
-fixed effects plus count, family, location and current-shape controls.
+For 2.31 million pitches with a predecessor in the same at-bat, a standardised
+shape gap was computed against the previous pitch and put through the same
+within-batter machinery as the familiarity study.
 
 | Variable | Whiff effect | p | CSW effect | p |
 |---|---|---|---|---|
-| Shape gap from previous pitch | −0.32pp per unit | <0.001 | −0.22pp | <0.001 |
-| Exact shape-cell repeat | +0.29pp | 0.019 | +0.51pp | <0.001 |
+| Shape gap from previous pitch | −0.34pp per unit | <0.001 | −0.24pp | <0.001 |
+| Exact shape-cell repeat | +0.23pp | 0.085 | +0.50pp | <0.001 |
 
-Bigger contrast with the previous pitch predicts slightly *fewer* whiffs, and
-repeating the exact same shape twice in a row is mildly *good*. The novelty
-that matters is measured in days and games — the 30-day exposure effect — not
-in seconds within an at-bat. Hitters expect change; doubling up exploits the
-expectation.
+Both signs run against conventional sequencing wisdom: bigger contrast with the
+previous pitch predicts slightly *fewer* whiffs, and repeating the same shape is
+neutral-to-good rather than punished. The novelty that matters is measured in
+days and games, not seconds within an at-bat. Hitters expect change.
 
 ### The outlier advantage holds in every count — and is barely exploited
 
-Re-running the within-batter whiff model separately by count state:
-
 | Count state | Uniqueness whiff effect | p |
 |---|---|---|
-| Batter ahead | +1.83pp | <0.001 |
-| Even | +2.99pp | <0.001 |
-| Pitcher ahead | +2.88pp | <0.001 |
+| Batter ahead | +2.08pp | <0.001 |
+| Even | +3.07pp | <0.001 |
+| Pitcher ahead | +3.69pp | <0.001 |
 | Two strikes | +2.52pp | <0.001 |
 
-Significant everywhere; largest in even and pitcher-ahead counts, smallest when
-the batter is ahead. Deployment, though, is nearly flat: outlier-decile pitches
-are thrown 19.9% of the time when the batter is ahead and 20.7% with two
-strikes — less than a point of tilt toward putaway situations, against an edge
-that holds in every count. Unusual pitches look underused everywhere, not just
-saved for strikeouts.
+Significant everywhere, largest when the pitcher is ahead. Deployment is nearly
+flat: outlier-decile pitches are 20.0% of pitches when the batter is ahead and
+20.9% with two strikes — under a point of tilt, against an edge that holds in
+every count.
 """) + fig("fig16_sequencing",
            "Raw whiff rate by contrast with the previous pitch, and the "
            "within-batter uniqueness effect by count state.")),
 
+    section("9", "Does the newest season continue the trends?",
+            "4 of 8 continue", "partial", body("""
+Trends pooled across a window can hide a turning point in the most recent
+season. Scoring the year-specific series on whether 2026 extends the prior
+direction:
 
-    section("9", "2026 in-season check", "Out of sample", "yes", body("""
-Everything above was produced before the 2026 season existed, which makes 2026
-a genuine out-of-sample test rather than a refit. The season is two-thirds
-complete, so **every season in this check is truncated to the same calendar
-window** — opening day to 13 August — isolating what changed from the fact that
-August is not October. Matched that way the six seasons run 499k–538k pitches
-each.
-
-**Seven of eleven claims hold.** The four that break turn out to support the
-mechanism rather than undermine it.
-
-| Claim | 2021–25 | 2026 | |
+| Claim | Through 2025 | 2026 | |
 |---|---|---|---|
-| Pitchers drift toward the league centre | 63.6% inward | 68.9% inward (null 56.7%) | holds |
+| Pitchers drift toward the centre | 63.6% inward | 68.9% inward | holds |
 | Arrivals more typical than incumbents | −5.1% | −2.2% | holds |
-| Crowding degrades a shape (xwOBAcon) | +0.0106, p=0.001 | +0.0089, p=0.036 | holds |
-| Recent exposure blunts a pitch | −0.42pp per doubling | −0.46pp, p=1.5e−28 | holds |
 | Four-seam usage keeps falling | 35.2% → 31.8% | 30.7% (−1.09pp) | holds |
-| Outlier advantage across counts | +1.8 to +3.0pp | 4/4 counts significant | holds |
+| Splitter effectiveness erodes | whiff 35.5% → 32.5% | 32.7% | holds |
 | Sweeper usage keeps rising | 19.4% → 22.8% | 22.2% (−0.62pp) | breaks |
-| Splitter usage keeps rising | 1.6% → 3.4% | 3.3% (−0.13pp) | breaks |
+| Splitter usage keeps rising | 1.6% → 3.4% | 3.3% (−0.12pp) | breaks |
 | Splitter keeps drawing practitioners | 72 → 151 | 136 | breaks |
 | Deathball edge keeps eroding | +7.9pp peak, then +5.8 | +7.6pp | breaks |
 
-Convergence was **stronger in 2026 than in any prior season**, and the sixth
-season pushed the multivariate homogenisation test across the significance
-line.
-""") + readout("−8.7% per axis", "pooled shape-space volume, p = 0.017 — was −5.6%, p = 0.098")
-        + body("""
-### Why the failures matter
-
-Three of the four are one event: **the sweeper and splitter booms stopped.** I
-predicted their usage would keep rising. It fell. But the sweeper's relative run
-value had declined *monotonically for six straight seasons* — +0.356, +0.242,
-+0.214, +0.144, +0.048, −0.000 — and usage turned down in the exact season its
-value reached zero. Splitter practitioners fell for the first time (151 → 136)
-after its whiff rate eroded from 35.5% to 32.5%.
-
-Crowding-out was the prediction; continued adoption was an extrapolation layered
-on top of it, and only the extrapolation failed. A pitch whose value is being
-competed away should eventually be abandoned, not adopted forever.
+Three of the four failures are one event: **the sweeper and splitter booms
+stopped.** That is the mechanism completing rather than failing. A pitch whose
+value is being competed away should eventually be abandoned, not adopted
+forever — and the sweeper's usage turned down in the exact season its relative
+run value reached zero. What failed is the extrapolation layered on top of the
+mechanism, not the mechanism. The fourth failure is genuine: the deathball's
+edge did not erode, and this data cannot yet say whether it eventually will.
 
 ### The changeup came back
 
-The clearest result of the check is the pitch nobody was watching. The changeup
-was the most-abandoned offspeed pitch in the study — usage falling every year to
-a six-season low, the worst relative run value of any family in 2025, and
-actively cannibalised by splitter adopters. In 2026 it posted its best season on
-every measure at once.
+The clearest single result of the newest season is the pitch nobody was
+watching. The changeup was the most-abandoned offspeed pitch in the study —
+usage falling in each of the four seasons to 2025, reaching a six-season low,
+with the second-worst relative run value of any family that year, and actively
+cannibalised by splitter adopters.
 
 | | 2025 | 2026 |
 |---|---|---|
@@ -574,65 +522,55 @@ every measure at once.
 | Run value / 100 | −0.228 | +0.025 (first positive in six seasons) |
 
 A pitch was abandoned to scarcity, became effective again, and pitchers noticed
-within a season. That is the neglected-niche thesis in its most direct form.
-
-### The one genuine miss
-
-The deathball's edge over ordinary sliders did *not* keep eroding: +7.9pp
-(2023) → +4.4 → +5.8 → +7.6pp (2026), while adoption jumped from 2,574 to 3,637
-pitches. The earlier reading — "peaked in 2023 and declined each season since" —
-over-fitted three noisy points. Across four seasons the edge oscillates between
-+4 and +8pp with no detectable trend. The honest statement is that the deathball
-carries a large and so-far *persistent* advantage. Whether it eventually erodes
-like the sweeper is a question this data cannot yet answer.
+within a season. That is the neglected-niche thesis in its most direct form —
+and it is why changeups dominate the conventional-slot outlier list above.
 """) + fig("fig17_season_check",
-           "Usage by family, splitter whiff rate, and the deathball's edge "
-           "over ordinary sliders. All seasons truncated to the same calendar "
-           "window; the dotted line marks the in-progress 2026 season.")),
+           "Usage by family, splitter whiff rate, and the deathball's edge over "
+           "ordinary sliders. All seasons truncated to the same calendar window; "
+           "the dotted line marks the in-progress 2026 season.")),
 
-    section("7", "What this means", "", "", body("""
+    section("10", "What this means", "", "", body("""
 1. **The homogenisation is real, but local.** Pitchers converge on the template
-   for their pitch and arrive already conforming. What is not shrinking is the
-   number of templates.
+   for their pitch and arrive already conforming, and the joint shape space has
+   measurably contracted (−8.7% per axis, p = 0.017). What is not shrinking is
+   the number of templates — arsenals are broader than ever.
 2. **Crowding degrades a pitch.** The same shape allows harder contact as more
-   pitchers throw it. Popularity is self-limiting — the sweeper's value
-   decline, the splitter boom's fading whiff rate, and the deathball's
-   shrinking edge are the same curve at three different scales.
+   pitchers throw it. Popularity is self-limiting: the sweeper's six-season
+   monotone value decline and the splitter's fading whiff rate are the same
+   curve at two scales.
 3. **Novelty is a real, decaying asset — measured in days, not pitches.** Its
    value shows up in 15–60-day exposure windows and decays fastest for the
-   pitches that depend on it most. Within a single at-bat the logic inverts:
-   contrast with the previous pitch buys nothing and exact repetition is
-   mildly good. Hitters expect change; they adapt to shapes over weeks.
+   pitches that depend on it most. Within a single at-bat the logic inverts.
 4. **The opportunity is scarcity, not strangeness.** Uniqueness added no
    predictive signal beyond shape, so the edge is not "be weird" — it is
-   "occupy a shape hitters are not currently seeing." The abandoned-niche table
-   names specific candidates, and the conventional-slot unicorn list is
-   dominated by changeups and splitters — the corner of shape space that still
-   resists the design templates.
-5. **Unusual pitches are underdeployed in every count.** The outlier whiff
-   advantage is significant in all four count states, yet outlier-decile
-   pitches are thrown barely one percentage point more often with two strikes
-   than when behind. Deployment has not caught up to the edge.
+   "occupy a shape hitters are not currently seeing." The changeup's 2026
+   revival is that principle paying out in real time.
+5. **Unusual pitches are underdeployed in every count.** The advantage is
+   significant in all four count states, yet outlier-decile pitches get under a
+   point more two-strike usage than when behind.
 """)),
 
-    section("8", "Limitations", "", "", body("""
-- **Underpowered on dispersion.** 150–500 pitchers per family-season cannot
-  resolve a 5% change in spread. The first result is not "no homogenisation."
-- **Five seasons is short** for a trend practitioners date to the mid-2010s; the
-  2021 baseline is already deep into the pitch-design era.
+    section("11", "Limitations", "", "", body("""
+- **Underpowered on univariate dispersion.** 115–440 pitchers per family-season
+  cannot resolve a 5% change in a standard deviation. The per-family null is not
+  evidence of absence; the multivariate test is where this study has power.
+- **2026 is incomplete.** It is included on a matched calendar window, which
+  makes it comparable but still leaves it a two-thirds season subject to
+  in-season roster churn. Its trends are provisional until the season closes.
+- **Date matching costs data.** Truncating all seasons to 13 August discards
+  roughly a quarter of 2021–2025, which is why the scarcity panel retains 164
+  cells rather than 240. The threshold sensitivity shows the conclusion holds.
 - **Uniqueness is not exogenous.** It is computed from the same shape features
   used as controls, so the outlier study is associational. The scarcity panel
-  (same shape, varying usage) and the familiarity model (same pitch, varying
-  batter exposure) supply the identification.
-- **Confounders spanning the window.** Foreign-substance enforcement in June
-  2021 cut spin sharply, so spin results were re-run excluding pre-enforcement
-  2021; the pitch clock and shift ban arrived in 2023 and are absorbed by year
-  fixed effects; bat-tracking exists only from 2023 and is not used in the core
-  models.
+  and the familiarity model supply the identification.
+- **Confounders spanning the window.** Foreign-substance enforcement (June 2021)
+  cut spin sharply — spin results were re-run excluding pre-enforcement 2021;
+  the pitch clock and shift ban (2023) are absorbed by year fixed effects;
+  bat-tracking exists only from 2023 and is not used in the core models.
 - **Taxonomy drift is handled but real.** Savant's classifier is applied
   retroactively, so sweeper labels reach back to 2021 — an advantage here, since
   one classifier sees every season. Primary analyses still run at family level.
-""")),
+"""))
 ]
 
 
@@ -642,25 +580,27 @@ def main() -> None:
         '<header class="masthead">',
         '<p class="eyebrow">Statcast study · 2021–2026 regular seasons</p>',
         "<h1>Is modern pitch design making pitchers throw the same?</h1>",
-        '<p class="standfirst">Three and a half million pitches say yes — but '
-        "not in the way the question implies. The league is not collapsing "
-        "into one pitch. It is converging on a handful of templates, and "
-        "paying for it.</p>",
+        '<p class="standfirst">Three million pitches say yes — locally, and at a '
+        "cost the league is already paying. Pitchers converge on a handful of "
+        "templates, crowded shapes lose their edge, and the pitch everyone "
+        "abandoned just came back.</p>",
         '<dl class="runstrip">',
-        "<div><dt>Pitches analysed</dt><dd>3,554,404</dd></div>",
+        "<div><dt>Pitches analysed</dt><dd>3,130,910</dd></div>",
         "<div><dt>Seasons</dt><dd>2021–26</dd></div>",
-        "<div><dt>Pitcher-seasons</dt><dd>9,191</dd></div>",
+        "<div><dt>Pitcher-seasons</dt><dd>9,305</dd></div>",
         "<div><dt>Studies run</dt><dd>10</dd></div>",
         "</dl>",
         "</header>",
     ]
     parts.extend(SECTIONS)
     parts.append(
-        "<footer>Data: Baseball Savant via the mlb-statcast-pipeline CLI. "
-        "Bootstraps use 2,000 replicates resampled by pitcher; multiplicity "
-        "controlled at FDR q = 0.10 within each study. Every result carries a "
-        "meta sidecar recording the git commit, parameters and data-manifest "
-        "hash behind it.</footer>"
+        "<footer>Data: Baseball Savant via the mlb-statcast-pipeline CLI. All "
+        "seasons truncated to a matched calendar window (opening day to 13 "
+        "August) because 2026 is still being played. Bootstraps use 2,000 "
+        "replicates resampled by pitcher; multiplicity controlled at FDR "
+        "q = 0.10 within each study. Every result carries a meta sidecar "
+        "recording the git commit, parameters and data-manifest hash behind "
+        "it.</footer>"
     )
     parts.append("</div>")
 

@@ -25,21 +25,26 @@ for _d in (PARQUET_DIR, RESULTS_DIR, FIGURES_DIR, REPORT_DIR):
 SEED = 42
 YEARS = ([int(y) for y in os.environ["ANALYSIS_YEARS"].split(",")]
          if os.environ.get("ANALYSIS_YEARS")
-         else [2021, 2022, 2023, 2024, 2025])
+         else [2021, 2022, 2023, 2024, 2025, 2026])
 BASE_YEAR = YEARS[0]
 FINAL_YEAR = YEARS[-1]
 
-# When the last season is still in progress, every season is truncated at this
-# calendar day (MM-DD) so cross-season comparisons cover identical windows.
-# Without it, "2026 vs 2025" would confound the season with the calendar.
-SEASON_CUTOFF_MD = os.environ.get("SEASON_CUTOFF_MD") or None
+# Every season is truncated at this calendar day (MM-DD) so cross-season
+# comparisons cover identical windows. This is required while 2026 is still
+# being played: without it, "2026 vs 2025" would confound the season with the
+# calendar, since offspeed usage, velocity and roster composition all drift
+# late in a year. Set to None once the final season in YEARS is complete.
+SEASON_CUTOFF_MD = os.environ.get("SEASON_CUTOFF_MD", "08-13") or None
 
 # --- sample-size thresholds -------------------------------------------------
 MIN_PITCHES_ARSENAL = 100      # pitcher-family-year rows entering shape analyses
 MIN_PITCHES_ARSENAL_SENS = 200  # sensitivity threshold
 MIN_PITCHES_PITCHER_YEAR = 500  # pitcher-year rows for usage-entropy analyses
 MIN_PITCHES_DIRECTIONAL = 200   # repeat-pitcher directional convergence
-MIN_CELL_PITCHES = 500          # shape cells retained in the scarcity panel
+# Shape cells retained in the scarcity panel. Chosen for a full season; when
+# SEASON_CUTOFF_MD truncates the window the comparable threshold scales with it,
+# so the sensitivity run below uses 370 (500 x the ~0.74 window fraction).
+MIN_CELL_PITCHES = int(os.environ.get("MIN_CELL_PITCHES", 500))
 MIN_BATTER_TRAILING = 400       # batter-season pitches for familiarity study
 
 BOOT_REPS = 2000

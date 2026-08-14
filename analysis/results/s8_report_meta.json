@@ -1,6 +1,6 @@
 {
-  "git_sha": "e108be4",
-  "total_pitches": 3567640,
+  "git_sha": "637ddca",
+  "total_pitches": 3130910,
   "figures": [
     "fig01_dispersion_trends.png",
     "fig02_dispersion_contrast.png",
@@ -18,6 +18,7 @@
     "s0_handedness_check.csv",
     "s0_null_rates.csv",
     "s0_rows_per_season.csv",
+    "s10_season_scorecard.csv",
     "s1_dispersion_by_year.csv",
     "s1_dispersion_contrast.csv",
     "s1_primary_endpoint.csv",

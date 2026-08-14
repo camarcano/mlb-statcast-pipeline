@@ -1,9 +1,9 @@
 {
-  "git_sha": "46583c3",
+  "git_sha": "637ddca",
   "window_days": 30,
   "sensitivity_windows": [
     15,
     60
   ],
-  "rows": 3362298
+  "rows": 2896362
 }
