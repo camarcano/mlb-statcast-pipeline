@@ -515,6 +515,81 @@ saved for strikeouts.
            "Raw whiff rate by contrast with the previous pitch, and the "
            "within-batter uniqueness effect by count state.")),
 
+
+    section("9", "2026 in-season check", "Out of sample", "yes", body("""
+Everything above was produced before the 2026 season existed, which makes 2026
+a genuine out-of-sample test rather than a refit. The season is two-thirds
+complete, so **every season in this check is truncated to the same calendar
+window** — opening day to 13 August — isolating what changed from the fact that
+August is not October. Matched that way the six seasons run 499k–538k pitches
+each.
+
+**Seven of eleven claims hold.** The four that break turn out to support the
+mechanism rather than undermine it.
+
+| Claim | 2021–25 | 2026 | |
+|---|---|---|---|
+| Pitchers drift toward the league centre | 63.6% inward | 68.9% inward (null 56.7%) | holds |
+| Arrivals more typical than incumbents | −5.1% | −2.2% | holds |
+| Crowding degrades a shape (xwOBAcon) | +0.0106, p=0.001 | +0.0089, p=0.036 | holds |
+| Recent exposure blunts a pitch | −0.42pp per doubling | −0.46pp, p=1.5e−28 | holds |
+| Four-seam usage keeps falling | 35.2% → 31.8% | 30.7% (−1.09pp) | holds |
+| Outlier advantage across counts | +1.8 to +3.0pp | 4/4 counts significant | holds |
+| Sweeper usage keeps rising | 19.4% → 22.8% | 22.2% (−0.62pp) | breaks |
+| Splitter usage keeps rising | 1.6% → 3.4% | 3.3% (−0.13pp) | breaks |
+| Splitter keeps drawing practitioners | 72 → 151 | 136 | breaks |
+| Deathball edge keeps eroding | +7.9pp peak, then +5.8 | +7.6pp | breaks |
+
+Convergence was **stronger in 2026 than in any prior season**, and the sixth
+season pushed the multivariate homogenisation test across the significance
+line.
+""") + readout("−8.7% per axis", "pooled shape-space volume, p = 0.017 — was −5.6%, p = 0.098")
+        + body("""
+### Why the failures matter
+
+Three of the four are one event: **the sweeper and splitter booms stopped.** I
+predicted their usage would keep rising. It fell. But the sweeper's relative run
+value had declined *monotonically for six straight seasons* — +0.356, +0.242,
++0.214, +0.144, +0.048, −0.000 — and usage turned down in the exact season its
+value reached zero. Splitter practitioners fell for the first time (151 → 136)
+after its whiff rate eroded from 35.5% to 32.5%.
+
+Crowding-out was the prediction; continued adoption was an extrapolation layered
+on top of it, and only the extrapolation failed. A pitch whose value is being
+competed away should eventually be abandoned, not adopted forever.
+
+### The changeup came back
+
+The clearest result of the check is the pitch nobody was watching. The changeup
+was the most-abandoned offspeed pitch in the study — usage falling every year to
+a six-season low, the worst relative run value of any family in 2025, and
+actively cannibalised by splitter adopters. In 2026 it posted its best season on
+every measure at once.
+
+| | 2025 | 2026 |
+|---|---|---|
+| Usage | 10.15% | 11.21% (largest gain of any family) |
+| Whiff% | 29.14 | 29.77 (best of six seasons) |
+| xwOBAcon | 0.288 | 0.277 (best of six seasons) |
+| Run value / 100 | −0.228 | +0.025 (first positive in six seasons) |
+
+A pitch was abandoned to scarcity, became effective again, and pitchers noticed
+within a season. That is the neglected-niche thesis in its most direct form.
+
+### The one genuine miss
+
+The deathball's edge over ordinary sliders did *not* keep eroding: +7.9pp
+(2023) → +4.4 → +5.8 → +7.6pp (2026), while adoption jumped from 2,574 to 3,637
+pitches. The earlier reading — "peaked in 2023 and declined each season since" —
+over-fitted three noisy points. Across four seasons the edge oscillates between
++4 and +8pp with no detectable trend. The honest statement is that the deathball
+carries a large and so-far *persistent* advantage. Whether it eventually erodes
+like the sweeper is a question this data cannot yet answer.
+""") + fig("fig17_season_check",
+           "Usage by family, splitter whiff rate, and the deathball's edge "
+           "over ordinary sliders. All seasons truncated to the same calendar "
+           "window; the dotted line marks the in-progress 2026 season.")),
+
     section("7", "What this means", "", "", body("""
 1. **The homogenisation is real, but local.** Pitchers converge on the template
    for their pitch and arrive already conforming. What is not shrinking is the
@@ -565,7 +640,7 @@ def main() -> None:
     parts = [
         '<div class="wrap">',
         '<header class="masthead">',
-        '<p class="eyebrow">Statcast study · 2021–2025 regular seasons</p>',
+        '<p class="eyebrow">Statcast study · 2021–2026 regular seasons</p>',
         "<h1>Is modern pitch design making pitchers throw the same?</h1>",
         '<p class="standfirst">Three and a half million pitches say yes — but '
         "not in the way the question implies. The league is not collapsing "
@@ -573,9 +648,9 @@ def main() -> None:
         "paying for it.</p>",
         '<dl class="runstrip">',
         "<div><dt>Pitches analysed</dt><dd>3,554,404</dd></div>",
-        "<div><dt>Seasons</dt><dd>2021–25</dd></div>",
+        "<div><dt>Seasons</dt><dd>2021–26</dd></div>",
         "<div><dt>Pitcher-seasons</dt><dd>9,191</dd></div>",
-        "<div><dt>Studies run</dt><dd>9</dd></div>",
+        "<div><dt>Studies run</dt><dd>10</dd></div>",
         "</dl>",
         "</header>",
     ]

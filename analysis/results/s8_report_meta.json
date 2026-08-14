@@ -1,5 +1,5 @@
 {
-  "git_sha": "300f7c3",
+  "git_sha": "e108be4",
   "total_pitches": 3567640,
   "figures": [
     "fig01_dispersion_trends.png",
@@ -11,7 +11,8 @@
     "fig13_niches.png",
     "fig14_familiarity.png",
     "fig15_splitter_deathball.png",
-    "fig16_sequencing.png"
+    "fig16_sequencing.png",
+    "fig17_season_check.png"
   ],
   "results_tables": [
     "s0_handedness_check.csv",

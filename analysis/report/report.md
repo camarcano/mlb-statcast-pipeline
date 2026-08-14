@@ -20,7 +20,7 @@ Pitches were grouped into seven families (four-seam, sinker, cutter, slider/swee
 
 The primary unit of analysis is the **arsenal row**: one pitcher's version of one pitch family in one season, minimum 100 pitches. There are **9,191** of them. This grain matters — it stops workhorse starters from dominating a league-wide variance estimate, and it excludes position players pitching in blowouts, who never reach 100 pitches of anything.
 
-Nine studies were run. Three found nothing. That is reported here as prominently as what was found.
+Ten studies were run, the last of them an out-of-sample check against a season that did not exist when the others were written. Three found nothing. That is reported here as prominently as what was found.
 
 ---
 
@@ -278,6 +278,74 @@ Deployment, however, is nearly flat: outlier-decile pitches make up 19.9% of pit
 3. **Novelty is a real, decaying asset — measured in days, not pitches.** Its value shows up in 15–60-day exposure windows (−0.42pp whiff per doubling) and decays fastest for the pitches that depend on it most. Within a single at-bat the logic inverts: contrast with the previous pitch buys nothing, and exact repetition is mildly good. Hitters expect change; they adapt to shapes over weeks.
 4. **The practical opportunity is scarcity, not weirdness for its own sake.** Uniqueness added no predictive signal beyond shape — so the edge is not "be strange," it is "occupy a shape hitters are not currently seeing." The abandoned-niche table lists specific candidates: sinker and cutter cells that lost half their usage while still outperforming league average. The offspeed families supply most conventional-slot unicorns (Williams, Webb, Bednar, Avila), suggesting changeup/splitter shape space is where template-resistant variation still lives.
 5. **Unusual pitches are underdeployed in every count.** The outlier whiff advantage is significant in all four count states, yet outlier-decile pitches are thrown barely one percentage point more often with two strikes than when behind. Deployment has not caught up to the edge.
+
+---
+
+## 2026 in-season check: an out-of-sample test
+
+The results above were produced before the 2026 season existed. That makes 2026 a genuine out-of-sample test rather than a refit. Because the season is only two-thirds complete (through 13 August), **every season in this check is truncated to the same calendar window** — opening day to 13 August — so the comparison isolates what changed rather than confounding it with "August is not October." Matched, the six seasons run 499k–538k pitches each; 2026 contributes 538,039.
+
+**Seven of eleven claims hold.** The four that break do so in a way that turns out to support the underlying mechanism rather than undermine it.
+
+### What held
+
+| Claim | 2021–25 | 2026 | |
+|---|---|---|---|
+| Pitchers drift toward the league centre | 63.6% inward | **68.9% inward** (null 56.7%) | holds |
+| Arrivals more typical than incumbents | −5.1% | −2.2% | holds |
+| Crowding a shape degrades it (xwOBAcon) | +0.0106, p=0.001 | +0.0089, p=0.036 | holds |
+| Recent exposure blunts a pitch | −0.42pp per doubling | **−0.46pp**, p=1.5e−28 | holds |
+| Four-seam usage keeps falling | 35.2% → 31.8% | 30.7% (−1.09pp) | holds |
+| Outlier advantage across counts | +1.8 to +3.0pp | 4/4 counts significant | holds |
+
+Convergence was **stronger in 2026 than in any prior season** (mean cosine 0.182 against a 0.060 null), and arsenal diversity continued its monotone climb (entropy 1.087 → 1.137, families per pitcher 3.40 → 3.56).
+
+Most consequentially, the sixth season pushed the multivariate homogenization test over the significance line. Pooled shape-space volume now shrinks by **−0.73 log-units [−1.28, −0.12], p = 0.017** — about **−8.7% per shape axis**, up from a marginal −5.6% (p = 0.098) on five seasons. The univariate endpoint remains null for every family, but the picture that was "suggestive, not conclusive" is now conclusive at conventional levels.
+
+### What broke — and why it matters
+
+Three of the four failures are the same event: **the sweeper and splitter booms stopped.**
+
+| Family | Usage 2025 → 2026 | Relative run value 2025 → 2026 |
+|---|---|---|
+| **Changeup** | 10.15% → **11.21%** (+1.06pp) | −0.242 → **+0.011** (+0.253) |
+| Sinker | 15.67% → 16.67% (+1.00pp) | +0.240 → +0.232 |
+| Cutter | 7.79% → 7.92% (+0.13pp) | +0.029 → −0.075 |
+| Splitter | 3.44% → 3.31% (−0.13pp) | +0.133 → +0.060 |
+| Curveball | 8.40% → 8.04% (−0.36pp) | −0.331 → −0.401 |
+| **Slider/Sweeper** | 22.80% → **22.18%** (−0.62pp) | +0.035 → **−0.014** |
+| Four-seam | 31.75% → 30.66% (−1.09pp) | −0.000 → −0.002 |
+
+I predicted sweeper and splitter usage would keep rising. Both fell. But look at *why*: the sweeper's relative run value declined **monotonically for six straight seasons** — +0.356, +0.242, +0.214, +0.144, +0.048, −0.000 — and usage finally turned down in the exact season its value reached zero. Splitter practitioners fell for the first time (151 → 136) after its whiff rate had eroded from 35.5% to 32.5%.
+
+The crowding-out mechanism was the prediction. Continued adoption was an extrapolation layered on top of it, and it was the extrapolation that failed: a pitch whose value is being competed away should eventually be abandoned, not adopted forever. 2026 is the mechanism completing its cycle rather than contradicting it.
+
+### The changeup came back
+
+The clearest single result of the 2026 check is the pitch nobody was watching. The changeup was the most-abandoned offspeed pitch in the study — usage falling every year to a six-season low of 10.15%, the worst relative run value of any family in 2025 (−0.242), and actively cannibalized by splitter adopters (who cut changeup usage 3–6pp on adoption).
+
+In 2026 it posted its **best season on every measure at once**:
+
+| | 2025 | 2026 |
+|---|---|---|
+| Usage | 10.15% | **11.21%** (largest gain of any family) |
+| Whiff% | 29.14 | **29.77** (best of six seasons) |
+| xwOBAcon | 0.288 | **0.277** (best of six seasons) |
+| Run value/100 | −0.228 | **+0.025** (first positive in six seasons) |
+
+This is the neglected-niche thesis in its most direct form: a pitch was abandoned to scarcity, became effective again, and pitchers noticed within a season.
+
+### The one genuine miss
+
+The deathball's whiff edge over ordinary sliders did **not** continue eroding: +7.9pp (2023) → +4.4 → +5.8 → **+7.6pp (2026)**, with adoption rising sharply (2,574 → 3,637 pitches, 159 → 168 pitchers). Its share of slider-family pitches jumped from 1.50% to 2.20%.
+
+My earlier reading — "peaked in 2023 and has declined each season since" — over-fitted three noisy points. Across four seasons the edge oscillates between +4 and +8pp with no detectable trend. The honest statement is that the deathball carries a large, *persistent* advantage that has not yet been competed away. Whether it eventually erodes like the sweeper is an open question this data cannot yet answer. (Roki Sasaki now appears among the leading practitioners, alongside Cristopher Sánchez, Logan Gilbert and Grant Holmes — the operational definition is picking up the pitchers the practitioner literature names.)
+
+![2026 against the five-season record](figures/fig17_season_check.png)
+
+### What the check changes
+
+Nothing in the core argument. Convergence, crowding, familiarity decay and the outlier advantage all replicated, and the headline homogenization test got *stronger* with a sixth season. What 2026 corrects is a piece of naive extrapolation: booms do not run forever, and the same mechanism that degrades a crowded pitch eventually sends pitchers back to the neglected one. The changeup's revival is the study's own prediction arriving a season early.
 
 ---
 

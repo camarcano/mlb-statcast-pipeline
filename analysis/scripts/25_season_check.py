@@ -147,14 +147,17 @@ def check_deathball(rows: list) -> None:
     if new.empty or prior.empty:
         return
     peak = prior.loc[prior["whiff_edge_pp"].idxmax()]
+    last_prior = prior.sort_values("game_year").iloc[-1]
+    now = float(new["whiff_edge_pp"].iloc[0])
     rows.append({
         "claim": "Deathball edge erodes as adoption spreads",
         "prior_seasons": f"peak +{peak['whiff_edge_pp']:.1f}pp in "
-                         f"{int(peak['game_year'])}",
-        "new_season": f"+{float(new['whiff_edge_pp'].iloc[0]):.1f}pp, "
-                      f"{int(new['db_pitchers'].iloc[0])} pitchers",
-        "verdict": verdict(float(new["whiff_edge_pp"].iloc[0])
-                           < float(peak["whiff_edge_pp"])),
+                         f"{int(peak['game_year'])}, then "
+                         f"+{last_prior['whiff_edge_pp']:.1f}pp",
+        "new_season": f"+{now:.1f}pp, {int(new['db_pitchers'].iloc[0])} pitchers",
+        # continuing the decline means falling again, not merely sitting
+        # below a peak set three seasons ago
+        "verdict": verdict(now <= float(last_prior["whiff_edge_pp"])),
     })
 
 
@@ -184,12 +187,11 @@ def check_ecology(rows: list) -> None:
                                   ("FS", "Splitter usage keeps rising", 1)):
         if fam not in piv.columns:
             continue
-        change = 100 * (new[fam] - prev[fam])
+        change = new[fam] - prev[fam]
         rows.append({
             "claim": label,
-            "prior_seasons": f"{100 * piv[fam].iloc[0]:.1f}% -> "
-                             f"{100 * prev[fam]:.1f}%",
-            "new_season": f"{100 * new[fam]:.1f}% ({change:+.2f}pp)",
+            "prior_seasons": f"{piv[fam].iloc[0]:.1f}% -> {prev[fam]:.1f}%",
+            "new_season": f"{new[fam]:.1f}% ({change:+.2f}pp)",
             "verdict": verdict(change * direction > 0),
         })
 
@@ -203,7 +205,7 @@ def figure(scorecard: pd.DataFrame) -> None:
     fig, axes = P.facet_grid(3, ncols=3, width=4.1, height=3.3)
 
     ax = axes[0]
-    piv = eco.pivot(index="game_year", columns="family", values="usage_share") * 100
+    piv = eco.pivot(index="game_year", columns="family", values="usage_share")
     for fam in ["FF", "SLV", "FS", "SI", "CH"]:
         if fam in piv.columns:
             ax.plot(piv.index, piv[fam], marker="o", lw=1.6,
@@ -211,7 +213,8 @@ def figure(scorecard: pd.DataFrame) -> None:
     ax.axvline(config.FINAL_YEAR - 0.5, color=P.AXIS, lw=1, ls=":")
     P.style_axis(ax, title="Usage share by family", ylabel="% of pitches")
     P.year_axis(ax, config.YEARS)
-    ax.legend(ncol=3, fontsize=7)
+    ax.legend(ncol=3, fontsize=7, loc="upper center",
+              bbox_to_anchor=(0.5, -0.18), frameon=False)
 
     ax = axes[1]
     if not split.empty:
