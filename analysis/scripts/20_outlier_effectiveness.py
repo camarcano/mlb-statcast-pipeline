@@ -6,10 +6,10 @@ through four models that fail in different ways:
 
 1. Decile gradient -- assumption-free, but says nothing about why.
 2. Spline regression with controls -- flexible shape, but between-pitcher.
-3. Mixed model with a pitcher random intercept -- asks the within-pitcher
-   question: when a given pitcher's pitch becomes more unusual, does it get
-   better? This is what separates "unusual pitches are good" from "good
-   pitchers throw unusual pitches".
+3. Within/between decomposition -- the within estimator holds the pitcher
+   fixed and asks whether his own pitch improves as it drifts from the norm;
+   the between estimator asks whether the pitchers who own unusual pitches are
+   simply better. This separates the effect from the selection.
 4. Gradient boosting on the pitch grain -- does uniqueness add predictive
    signal beyond velocity, movement and location?
 
@@ -143,47 +143,76 @@ def spline_models(ars: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def mixed_models(ars: pd.DataFrame) -> pd.DataFrame:
-    """Pitcher random intercept: the within-pitcher uniqueness question.
+def within_between_models(ars: pd.DataFrame) -> pd.DataFrame:
+    """Separate "this pitch got weirder" from "weird pitchers are better".
 
-    uniq_pct is split into a pitcher's career mean (between component) and the
-    season-to-season deviation from it (within component). The within
-    coefficient answers whether the same pitcher's pitch improves when it drifts
-    away from the league.
+    Two estimators on the same panel of pitcher-pitches observed in at least
+    two seasons:
+
+    * **within** — pitcher-by-family fixed effects absorbed by demeaning, so
+      the coefficient comes only from a given pitcher's own pitch moving in and
+      out of the league norm across seasons. This is the causal-flavoured one:
+      pitcher talent is held constant by construction.
+    * **between** — one row per pitcher-pitch, regressing career-average
+      outcome on career-average uniqueness. This captures selection: whether
+      the pitchers who own unusual pitches are simply better.
+
+    A mixed model was tried first and proved numerically fragile: outcome
+    variances here span five orders of magnitude (whiff% around 80, xwOBAcon
+    around 0.0015) and three of four outcomes failed with singular matrices.
+    Demeaning gives the identical within estimand without the fit.
     """
     d = ars.dropna(subset=["uniq_pct"]).copy()
     d["velo_z"] = d.groupby(["family", "game_year"])["release_speed"].transform(
         lambda s: (s - s.mean()) / s.std(ddof=1))
     grp = d.groupby(["pitcher", "family"])["uniq_pct"]
     d["uniq_between"] = grp.transform("mean")
-    d["uniq_within"] = d["uniq_pct"] - d["uniq_between"]
-    d["year_f"] = d["game_year"].astype(str)
-    # keep pitcher-pitches observed in at least two seasons: only they carry
-    # within-pitcher information
     d["n_seasons"] = grp.transform("size")
+    d["unit"] = (d["pitcher"].astype(str) + "|" + d["family"].astype(str))
+
+    controls = ["velo_z", "zone_pct", "platoon_share"]
     rows = []
     for col in ["whiff_pct_eb", "csw_pct_eb", "rv100_eb", "xwobacon_eb"]:
-        sub = d.dropna(subset=[col, "velo_z", "zone_pct"])
+        sub = d.dropna(subset=[col] + controls)
         sub = sub[sub["n_seasons"] >= 2]
-        if len(sub) < 300 or sub["uniq_within"].abs().max() < 1e-9:
+        if len(sub) < 300:
             continue
-        try:
-            m = smf.mixedlm(
-                f"{col} ~ uniq_within + uniq_between + velo_z + zone_pct "
-                "+ platoon_share + C(family) + C(year_f)",
-                data=sub, groups=sub["pitcher"],
-            ).fit(method="lbfgs", maxiter=200)
-        except Exception as exc:  # pragma: no cover - defensive
-            print(f"  mixed model failed for {col}: {exc}")
-            continue
+
+        # ---- within: absorb pitcher-by-family effects -------------------
+        ydum = pd.get_dummies(sub["game_year"].astype(str), prefix="yr",
+                              drop_first=True, dtype=float)
+        X = pd.concat([sub[["uniq_pct"] + controls].astype(float), ydum], axis=1)
+        y = sub[col].astype(float)
+        unit = sub["unit"].to_numpy()
+        Xw = X - X.groupby(unit).transform("mean")
+        yw = y - y.groupby(unit).transform("mean")
+        keep = Xw.std() > 1e-12
+        Xw = Xw.loc[:, keep]
+        mw = sm.OLS(yw, sm.add_constant(Xw, has_constant="add")).fit(
+            cov_type="cluster", cov_kwds={"groups": sub["pitcher"]})
+
+        # ---- between: one row per pitcher-pitch --------------------------
+        agg = (sub.groupby(["unit", "family"])
+               .agg(**{col: (col, "mean"), "uniq": ("uniq_between", "first"),
+                       **{c: (c, "mean") for c in controls},
+                       "pitcher": ("pitcher", "first")})
+               .reset_index())
+        fdum = pd.get_dummies(agg["family"], prefix="fam", drop_first=True,
+                              dtype=float)
+        Xb = pd.concat([agg[["uniq"] + controls].astype(float), fdum], axis=1)
+        mb = sm.OLS(agg[col].astype(float),
+                    sm.add_constant(Xb, has_constant="add")).fit(
+            cov_type="cluster", cov_kwds={"groups": agg["pitcher"]})
+
         rows.append({
-            "outcome": col.replace("_eb", ""), "n": int(len(sub)),
-            "within_coef": float(m.params.get("uniq_within", np.nan)),
-            "within_se": float(m.bse.get("uniq_within", np.nan)),
-            "within_p": float(m.pvalues.get("uniq_within", np.nan)),
-            "between_coef": float(m.params.get("uniq_between", np.nan)),
-            "between_se": float(m.bse.get("uniq_between", np.nan)),
-            "between_p": float(m.pvalues.get("uniq_between", np.nan)),
+            "outcome": col.replace("_eb", ""),
+            "n_within": int(len(sub)), "n_units": int(sub["unit"].nunique()),
+            "within_coef": float(mw.params.get("uniq_pct", np.nan)),
+            "within_se": float(mw.bse.get("uniq_pct", np.nan)),
+            "within_p": float(mw.pvalues.get("uniq_pct", np.nan)),
+            "between_coef": float(mb.params.get("uniq", np.nan)),
+            "between_se": float(mb.bse.get("uniq", np.nan)),
+            "between_p": float(mb.pvalues.get("uniq", np.nan)),
         })
     df = pd.DataFrame(rows)
     if not df.empty:
@@ -332,10 +361,10 @@ def main() -> None:
         print("\n=== spline regression: 10th → 90th uniqueness percentile ===")
         print(sp.round(4).to_string(index=False))
 
-    mm = mixed_models(scored)
+    mm = within_between_models(scored)
     if not mm.empty:
-        D.save_result(mm, "s5_mixed_models")
-        print("\n=== within-pitcher (mixed model) ===")
+        D.save_result(mm, "s5_within_between")
+        print("\n=== within-pitcher vs between-pitcher ===")
         print(mm.round(4).to_string(index=False))
 
     gbm, extra = gbm_incremental(scored, years)
