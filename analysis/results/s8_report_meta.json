@@ -1,0 +1,43 @@
+{
+  "git_sha": "1fb9e74",
+  "total_pitches": 178017,
+  "figures": [
+    "fig01_dispersion_trends.png",
+    "fig02_dispersion_contrast.png",
+    "fig04_shape_volume.png",
+    "fig06_convergence.png",
+    "fig08_ecology.png",
+    "fig10_uniqueness_gradient.png",
+    "fig13_niches.png",
+    "fig14_familiarity.png"
+  ],
+  "results_tables": [
+    "s0_handedness_check.csv",
+    "s0_null_rates.csv",
+    "s0_rows_per_season.csv",
+    "s1_dispersion_by_year.csv",
+    "s1_dispersion_contrast.csv",
+    "s1_primary_endpoint.csv",
+    "s1_spin_sticky_sensitivity.csv",
+    "s2_league_volume.csv",
+    "s2_logdet_change.csv",
+    "s2_shape_volume.csv",
+    "s3_arsenal_diversity.csv",
+    "s3_crowding.csv",
+    "s4_family_ecology.csv",
+    "s4_fine_type_ecology.csv",
+    "s4_taxonomy_stability.csv",
+    "s4_usage_value_quadrant.csv",
+    "s5_decile_contrasts.csv",
+    "s5_decile_gradient.csv",
+    "s5_gbm_incremental.csv",
+    "s5_gbm_pdp.csv",
+    "s5_most_unusual_pitches.csv",
+    "s5_spline_models.csv",
+    "s6_abandoned_niches.csv",
+    "s6_cell_panel.csv",
+    "s7_exposure_bins.csv",
+    "s7_familiarity_models.csv",
+    "s7_window_sensitivity.csv"
+  ]
+}

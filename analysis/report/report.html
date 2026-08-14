@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pitch Homogenization in MLB, 2021-2025</title>
+<style>
+  :root {
+    --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b;
+    --ink-2: #52514e; --ink-3: #898781; --rule: #e1e0d9; --accent: #2a78d6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --page: #0d0d0d; --surface: #1a1a19; --ink: #ffffff;
+      --ink-2: #c3c2b7; --ink-3: #898781; --rule: #2c2c2a; --accent: #3987e5;
+    }
+  }
+  :root[data-theme="dark"] {
+    --page: #0d0d0d; --surface: #1a1a19; --ink: #ffffff;
+    --ink-2: #c3c2b7; --ink-3: #898781; --rule: #2c2c2a; --accent: #3987e5;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0; background: var(--page); color: var(--ink);
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 62rem; margin: 0 auto; padding: 3rem 1.5rem 6rem; }
+  h1 { font-size: 2.1rem; line-height: 1.2; letter-spacing: -0.02em;
+        margin: 0 0 1.5rem; }
+  h2 { font-size: 1.4rem; margin: 3rem 0 0.75rem; letter-spacing: -0.01em;
+        padding-top: 1.25rem; border-top: 1px solid var(--rule); }
+  h3 { font-size: 1.08rem; margin: 2rem 0 0.5rem; color: var(--ink); }
+  p, li { color: var(--ink-2); }
+  strong { color: var(--ink); font-weight: 650; }
+  a { color: var(--accent); }
+  code { background: var(--surface); padding: 0.1em 0.35em; border-radius: 4px;
+          font-size: 0.88em; border: 1px solid var(--rule); }
+  img { max-width: 100%; height: auto; display: block; margin: 1.5rem auto 0.5rem;
+         background: #fcfcfb; border: 1px solid var(--rule); border-radius: 8px;
+         padding: 0.5rem; }
+  em { color: var(--ink-3); font-size: 0.9rem; }
+  .table-wrap, table { display: block; overflow-x: auto; max-width: 100%; }
+  table { border-collapse: collapse; margin: 1.25rem 0; font-size: 0.86rem; }
+  th, td { padding: 0.45rem 0.8rem; text-align: left; white-space: nowrap;
+            border-bottom: 1px solid var(--rule); }
+  th { color: var(--ink); font-weight: 650; background: var(--surface); }
+  td { color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  blockquote { margin: 1.5rem 0; padding: 0.9rem 1.2rem; background: var(--surface);
+                border-left: 3px solid var(--accent); border-radius: 0 6px 6px 0; }
+  blockquote p { margin: 0.3rem 0; }
+  hr { border: 0; border-top: 1px solid var(--rule); margin: 2.5rem 0; }
+</style>
+</head>
+<body><main>
+<h1 id="is-mlb-pitching-becoming-homogeneous">Is MLB pitching becoming homogeneous?</h1>
+<p><em>Testing whether modern pitch design has narrowed the range of pitches thrown in
+Major League Baseball, and whether unusual pitches gain effectiveness from being
+rare. Regular seasons 2021-2025.</em></p>
+<blockquote>
+<p><strong>Status:</strong> results sections are populated by the study scripts; this draft
+carries the hypothesis, data and method sections.</p>
+</blockquote>
+<h2 id="the-hypothesis">The hypothesis</h2>
+<p>Pitch development has become an engineering discipline. Every organisation now
+has access to the same tracking data, the same stuff models, and broadly the
+same training methods, and those models score a pitch from its physical
+characteristics alone — velocity, movement, spin, release. If everyone
+optimises the same objective over the same variables, the optimum is a point,
+and arsenals should be drawn toward it.</p>
+<p>The hypothesis under test has two parts:</p>
+<ol>
+<li><strong>Convergence.</strong> The distribution of pitch characteristics across MLB
+   pitchers has narrowed over the past five seasons.</li>
+<li><strong>A neglected margin.</strong> Because hitters see mostly standard shapes, pitches
+   that sit outside the norm should be disproportionately effective — and some
+   pitch types or regions of the shape space may have been abandoned despite
+   still working.</li>
+</ol>
+<p>The second claim is the one with practical consequences, and it is the harder
+of the two to establish, because unusual pitches are thrown by a non-random set
+of pitchers.</p>
+<h2 id="data">Data</h2>
+<p>Pitch-by-pitch Statcast data for every regular-season game, 2021-2025, fetched
+from Baseball Savant by this repository's <code>statcast</code> CLI and analysed from a
+year-partitioned parquet snapshot. Postseason and spring training are excluded
+so that the population is consistent across seasons.</p>
+<p>Each pitch carries release speed, spin rate and spin axis, the two movement
+components, release position and extension, arm angle, plate location, count
+state, and the outcome fields used here: the pitch description (from which
+whiff, called strike and CSW are derived), the change in run expectancy, and
+expected wOBA on contact.</p>
+<h3 id="pitch-shape">Pitch shape</h3>
+<p>Movement is converted to inches and expressed as induced vertical break (IVB)
+and horizontal break. All horizontal quantities — break and release side — are
+sign-normalised so that <strong>positive always means arm-side</strong>, for left- and
+right-handers alike. Without this, pooling the two would manufacture
+bimodality in every horizontal variable and make the league look far more
+diverse than it is. The feature build refuses to run if sinkers do not show
+strong arm-side break for both hands.</p>
+<h3 id="pitch-families-and-why-not-pitch-types">Pitch families, and why not pitch types</h3>
+<p>Savant's classifier is not stable across these five seasons: the sweeper
+(<code>ST</code>) and slurve (<code>SV</code>) labels were introduced for 2023 out of what had been
+<code>SL</code>. A trend computed on raw pitch types would mix a real behavioural change
+with a relabelling artefact. Primary analyses therefore use seven stable
+families — four-seam, sinker, cutter, slider/sweeper, curveball, changeup,
+splitter — with knuckleballs, eephuses and pitchouts excluded.</p>
+<h3 id="the-unit-of-analysis">The unit of analysis</h3>
+<p>Most of this report works at the <strong>arsenal-row</strong> grain: one row per pitcher,
+pitch family and season, for combinations with at least 100 pitches. This is
+the grain at which a pitch exists as a designed object — a pitcher's slider in
+2024 is one thing, thrown many times. Measuring dispersion over raw pitches
+instead would let a 3,000-pitch starter count ten times as much as a 300-pitch
+reliever, and would confuse <em>usage</em> concentrating with <em>pitchers</em> converging.</p>
+<p>Two other grains appear: the pitch itself, for outcome models and the
+familiarity study; and shape cells (2 mph x 4 in x 4 in blocks of the
+velocity-movement space) for the scarcity panel.</p>
+<h2 id="method">Method</h2>
+<p>Seven studies, ordered from descriptive to identifying.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Study</th>
+<th>Question</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S1</td>
+<td>Dispersion trends</td>
+<td>Is the spread of each characteristic shrinking?</td>
+</tr>
+<tr>
+<td>S2</td>
+<td>Shape-space volume</td>
+<td>Is the multivariate cloud shrinking, even where single characteristics are stable?</td>
+</tr>
+<tr>
+<td>S3</td>
+<td>Pitcher convergence</td>
+<td>Are individual pitchers moving toward each other and toward the league centre?</td>
+</tr>
+<tr>
+<td>S4</td>
+<td>Pitch ecology</td>
+<td>What is thrown, and what is it worth?</td>
+</tr>
+<tr>
+<td>S5</td>
+<td>Outlier effectiveness</td>
+<td>Do unusual pitches perform better?</td>
+</tr>
+<tr>
+<td>S6</td>
+<td>Scarcity panel</td>
+<td>Holding the shape fixed, does becoming rarer make it better?</td>
+</tr>
+<tr>
+<td>S7</td>
+<td>Batter familiarity</td>
+<td>Holding the pitch fixed, does recent exposure make it worse?</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Uncertainty.</strong> Bootstrap intervals resample <em>pitchers</em>, not pitches, because
+a pitcher contributes many correlated observations and pitch-level resampling
+would produce intervals several times too narrow. Families of related tests
+are controlled with Benjamini-Hochberg at q = 0.10, and each study declares a
+single primary endpoint so that no conclusion rests on the best of fifty
+comparisons.</p>
+<p><strong>Noisy rates are shrunk.</strong> Pitcher-season outcome rates are shrunk toward the
+family-season mean with empirical Bayes — beta-binomial for rates,
+normal-normal for run value — so that a 100-pitch splitter with a freak run
+value does not drive the uniqueness gradient.</p>
+<p><strong>What each design can support.</strong> S1-S4 are descriptive. S5 is associational
+by construction: uniqueness is a deterministic function of the same shape
+features any model would use, so it cannot be "extra information" in a
+predictive sense, and unusual pitches are thrown by a non-random set of
+pitchers. The identifying leverage sits in S6, which holds a shape fixed and
+varies only how often the league throws it, and in S7, which holds the pitch
+fixed and varies how much a given hitter has recently seen that shape.</p>
+<h2 id="confounders">Confounders</h2>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Effect</th>
+<th>Handling</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Foreign-substance enforcement, 21 June 2021</td>
+<td>League four-seam spin fell about 80 rpm; roughly three-quarters of pitchers lost spin</td>
+<td>Spin comparisons anchored on 2021 are re-run using only post-enforcement data</td>
+</tr>
+<tr>
+<td>Pitch clock and shift ban, 2023</td>
+<td>Shifts the run environment, not pitch shape</td>
+<td>Year fixed effects; outcomes expressed relative to each season's league mean</td>
+</tr>
+<tr>
+<td>Ball construction drift</td>
+<td>Same</td>
+<td>Same</td>
+</tr>
+<tr>
+<td><code>arm_angle</code> coverage</td>
+<td>Derived field, published later and back-filled</td>
+<td>Coverage measured per season; enters the feature vector only if adequate everywhere</td>
+</tr>
+<tr>
+<td>Bat tracking (2023+)</td>
+<td>Only covers competitive swings from 2023</td>
+<td>Not used in any cross-season comparison</td>
+</tr>
+<tr>
+<td>Sweeper/slurve labels (2023+)</td>
+<td>Classifier change, not a behaviour change</td>
+<td>Family-level primary analyses; per-type results reported separately with the caveat</td>
+</tr>
+</tbody>
+</table>
+<h2 id="reproducing">Reproducing</h2>
+<pre><code class="language-bash">pip install -e &quot;.[analysis]&quot;
+statcast init &amp;&amp; bash scripts/backfill_study.sh
+python -m analysis.run_all
+</code></pre>
+<p>Every table below has a matching CSV in <code>analysis/results/</code>, and every script
+writes a <code>*_meta.json</code> sidecar recording the git commit and parameters used.
+Prior work is annotated in <a href="literature.md"><code>literature.md</code></a>.</p>
+</main></body>
+</html>
