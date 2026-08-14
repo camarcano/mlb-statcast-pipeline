@@ -1,0 +1,63 @@
+{
+  "git_sha": "db28f08",
+  "rows_by_year": [
+    {
+      "game_year": 2024,
+      "pitches": 525367
+    },
+    {
+      "game_year": 2025,
+      "pitches": 528419
+    }
+  ],
+  "columns": [
+    "game_pk",
+    "game_date",
+    "game_year",
+    "at_bat_number",
+    "pitch_number",
+    "pitcher",
+    "batter",
+    "player_name",
+    "p_throws",
+    "stand",
+    "pitch_type",
+    "pitch_name",
+    "release_speed",
+    "effective_speed",
+    "release_spin_rate",
+    "spin_axis",
+    "pfx_x",
+    "pfx_z",
+    "plate_x",
+    "plate_z",
+    "zone",
+    "release_pos_x",
+    "release_pos_z",
+    "release_extension",
+    "arm_angle",
+    "api_break_z_with_gravity",
+    "api_break_x_arm",
+    "balls",
+    "strikes",
+    "outs_when_up",
+    "inning",
+    "n_thruorder_pitcher",
+    "type",
+    "description",
+    "events",
+    "bb_type",
+    "launch_speed",
+    "launch_angle",
+    "estimated_woba_using_speedangle",
+    "estimated_ba_using_speedangle",
+    "woba_value",
+    "woba_denom",
+    "delta_run_exp",
+    "delta_pitcher_run_exp",
+    "bat_speed",
+    "swing_length",
+    "sz_top",
+    "sz_bot"
+  ]
+}

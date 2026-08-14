@@ -1,0 +1,42 @@
+{
+  "git_sha": "db28f08",
+  "years": [
+    2024,
+    2025
+  ],
+  "pitch_counts": [
+    {
+      "game_year": 2024,
+      "pitches": 523526
+    },
+    {
+      "game_year": 2025,
+      "pitches": 526794
+    }
+  ],
+  "arsenal_rows": 3118,
+  "shape_features": [
+    "release_speed",
+    "ivb",
+    "hb_arm",
+    "release_spin_rate",
+    "release_extension",
+    "release_pos_z",
+    "release_side_arm"
+  ],
+  "arm_angle_included": false,
+  "handedness_check": [
+    {
+      "sinker_hb_arm_mean_R": 14.792810633264692,
+      "sinker_hb_arm_mean_L": 15.108027853565174,
+      "passed": true,
+      "game_year": 2024
+    },
+    {
+      "sinker_hb_arm_mean_R": 15.092901326475367,
+      "sinker_hb_arm_mean_L": 15.361030196899156,
+      "passed": true,
+      "game_year": 2025
+    }
+  ]
+}

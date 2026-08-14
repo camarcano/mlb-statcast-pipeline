@@ -3,13 +3,19 @@
 Every threshold, seed, taxonomy mapping and confounder date used anywhere in
 the analysis lives here so that results are reproducible from one file.
 """
+import os
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 ANALYSIS_DIR = REPO_ROOT / "analysis"
-PARQUET_DIR = REPO_ROOT / "data" / "analysis"
-RESULTS_DIR = ANALYSIS_DIR / "results"
-FIGURES_DIR = ANALYSIS_DIR / "figures"
+
+# An alternate run (e.g. the in-season 2026 check) writes to suffixed
+# directories so it never overwrites the headline five-season results.
+_TAG = os.environ.get("ANALYSIS_TAG", "")
+_SUFFIX = f"_{_TAG}" if _TAG else ""
+PARQUET_DIR = REPO_ROOT / "data" / f"analysis{_SUFFIX}"
+RESULTS_DIR = ANALYSIS_DIR / f"results{_SUFFIX}"
+FIGURES_DIR = ANALYSIS_DIR / f"figures{_SUFFIX}"
 REPORT_DIR = ANALYSIS_DIR / "report"
 DB_PATH = REPO_ROOT / "data" / "savant.db"
 
@@ -17,9 +23,16 @@ for _d in (PARQUET_DIR, RESULTS_DIR, FIGURES_DIR, REPORT_DIR):
     _d.mkdir(parents=True, exist_ok=True)
 
 SEED = 42
-YEARS = [2021, 2022, 2023, 2024, 2025]
-BASE_YEAR = 2021
-FINAL_YEAR = 2025
+YEARS = ([int(y) for y in os.environ["ANALYSIS_YEARS"].split(",")]
+         if os.environ.get("ANALYSIS_YEARS")
+         else [2021, 2022, 2023, 2024, 2025])
+BASE_YEAR = YEARS[0]
+FINAL_YEAR = YEARS[-1]
+
+# When the last season is still in progress, every season is truncated at this
+# calendar day (MM-DD) so cross-season comparisons cover identical windows.
+# Without it, "2026 vs 2025" would confound the season with the calendar.
+SEASON_CUTOFF_MD = os.environ.get("SEASON_CUTOFF_MD") or None
 
 # --- sample-size thresholds -------------------------------------------------
 MIN_PITCHES_ARSENAL = 100      # pitcher-family-year rows entering shape analyses

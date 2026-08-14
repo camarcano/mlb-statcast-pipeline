@@ -18,6 +18,10 @@ RAW_DIR = config.PARQUET_DIR / "raw"
 
 
 def main() -> None:
+    cutoff_clause = (
+        f"AND strftime(CAST(game_date AS DATE), '%m-%d') <= '{config.SEASON_CUTOFF_MD}'"
+        if config.SEASON_CUTOFF_MD else ""
+    )
     con = D.connect()
     D.attach_sqlite(con)
 
@@ -31,6 +35,7 @@ def main() -> None:
             FROM savant.statcast_pitches
             WHERE game_type = 'R'
               AND game_year BETWEEN {min(config.YEARS)} AND {max(config.YEARS)}
+              {cutoff_clause}
               AND pitch_type IS NOT NULL
               AND release_speed IS NOT NULL
         ) TO '{RAW_DIR}'

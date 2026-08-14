@@ -1,0 +1,212 @@
+{
+  "CH": {
+    "release_speed": {
+      "center": 85.95,
+      "scale": 3.0393299999999956
+    },
+    "ivb": {
+      "center": 4.68,
+      "scale": 4.180931999999999
+    },
+    "hb_arm": {
+      "center": 14.879999999999999,
+      "scale": 2.1349440000000017
+    },
+    "release_spin_rate": {
+      "center": 1804.0,
+      "scale": 301.7091
+    },
+    "release_extension": {
+      "center": 6.4,
+      "scale": 0.44477999999999973
+    },
+    "release_pos_z": {
+      "center": 5.74,
+      "scale": 0.38547599999999965
+    },
+    "release_side_arm": {
+      "center": 1.94,
+      "scale": 0.6819959999999999
+    }
+  },
+  "CU": {
+    "release_speed": {
+      "center": 80.2,
+      "scale": 3.1134600000000123
+    },
+    "ivb": {
+      "center": -10.5,
+      "scale": 4.625712
+    },
+    "hb_arm": {
+      "center": -8.58,
+      "scale": 4.581233999999999
+    },
+    "release_spin_rate": {
+      "center": 2567.0,
+      "scale": 265.3854
+    },
+    "release_extension": {
+      "center": 6.4,
+      "scale": 0.44477999999999973
+    },
+    "release_pos_z": {
+      "center": 5.985,
+      "scale": 0.36323700000000014
+    },
+    "release_side_arm": {
+      "center": 1.76,
+      "scale": 0.689409
+    }
+  },
+  "FC": {
+    "release_speed": {
+      "center": 89.525,
+      "scale": 2.5574850000000127
+    },
+    "ivb": {
+      "center": 7.92,
+      "scale": 2.490768000000002
+    },
+    "hb_arm": {
+      "center": -2.16,
+      "scale": 2.312856
+    },
+    "release_spin_rate": {
+      "center": 2398.75,
+      "scale": 172.72289999999998
+    },
+    "release_extension": {
+      "center": 6.4,
+      "scale": 0.44477999999999973
+    },
+    "release_pos_z": {
+      "center": 5.81,
+      "scale": 0.4003019999999993
+    },
+    "release_side_arm": {
+      "center": 1.88,
+      "scale": 0.726474
+    }
+  },
+  "FF": {
+    "release_speed": {
+      "center": 94.5,
+      "scale": 2.0756400000000084
+    },
+    "ivb": {
+      "center": 16.080000000000002,
+      "scale": 2.1349439999999964
+    },
+    "hb_arm": {
+      "center": 7.68,
+      "scale": 3.202416
+    },
+    "release_spin_rate": {
+      "center": 2305.0,
+      "scale": 139.3644
+    },
+    "release_extension": {
+      "center": 6.5,
+      "scale": 0.44477999999999973
+    },
+    "release_pos_z": {
+      "center": 5.87,
+      "scale": 0.4003019999999993
+    },
+    "release_side_arm": {
+      "center": 1.85,
+      "scale": 0.711648
+    }
+  },
+  "FS": {
+    "release_speed": {
+      "center": 86.4,
+      "scale": 3.1134600000000123
+    },
+    "ivb": {
+      "center": 2.52,
+      "scale": 3.5582399999999996
+    },
+    "hb_arm": {
+      "center": 10.44,
+      "scale": 3.2024160000000026
+    },
+    "release_spin_rate": {
+      "center": 1317.0,
+      "scale": 411.4215
+    },
+    "release_extension": {
+      "center": 6.6,
+      "scale": 0.44477999999999973
+    },
+    "release_pos_z": {
+      "center": 5.775,
+      "scale": 0.34841099999999914
+    },
+    "release_side_arm": {
+      "center": 1.97,
+      "scale": 0.6523439999999999
+    }
+  },
+  "SI": {
+    "release_speed": {
+      "center": 93.8,
+      "scale": 2.3721600000000125
+    },
+    "ivb": {
+      "center": 8.16,
+      "scale": 4.091976
+    },
+    "hb_arm": {
+      "center": 15.36,
+      "scale": 1.9570320000000003
+    },
+    "release_spin_rate": {
+      "center": 2175.0,
+      "scale": 146.0361
+    },
+    "release_extension": {
+      "center": 6.4,
+      "scale": 0.44477999999999973
+    },
+    "release_pos_z": {
+      "center": 5.71,
+      "scale": 0.429954
+    },
+    "release_side_arm": {
+      "center": 1.95,
+      "scale": 0.6375179999999999
+    }
+  },
+  "SLV": {
+    "release_speed": {
+      "center": 84.9,
+      "scale": 3.2246549999999954
+    },
+    "ivb": {
+      "center": 1.47,
+      "scale": 3.2468939999999997
+    },
+    "hb_arm": {
+      "center": -6.33,
+      "scale": 5.648706
+    },
+    "release_spin_rate": {
+      "center": 2482.5,
+      "scale": 235.36274999999998
+    },
+    "release_extension": {
+      "center": 6.4,
+      "scale": 0.44477999999999973
+    },
+    "release_pos_z": {
+      "center": 5.76,
+      "scale": 0.429954
+    },
+    "release_side_arm": {
+      "center": 2.0,
+      "scale": 0.6968220000000003
+    }
+  }
+}

@@ -37,8 +37,13 @@ def main() -> None:
     con = D.connect()
     D.attach_sqlite(con)
 
+    cutoff = (
+        f" AND strftime(CAST(game_date AS DATE), '%m-%d') <= '{config.SEASON_CUTOFF_MD}'"
+        if config.SEASON_CUTOFF_MD else ""
+    )
     base = ("FROM savant.statcast_pitches WHERE game_type = 'R' "
-            f"AND game_year BETWEEN {min(config.YEARS)} AND {max(config.YEARS)}")
+            f"AND game_year BETWEEN {min(config.YEARS)} AND {max(config.YEARS)}"
+            f"{cutoff}")
 
     per_year = con.execute(f"""
         SELECT game_year,
@@ -75,10 +80,17 @@ def main() -> None:
 
     # A season still being downloaded looks like a real season to every
     # downstream script, and would silently distort every cross-year contrast.
-    incomplete = per_year[per_year["game_dates"] < MIN_GAME_DATES_FULL_SEASON]
+    # When seasons are deliberately truncated to a matched calendar window the
+    # absolute threshold no longer applies, so seasons are judged against each
+    # other instead: the point is to catch one season short of its siblings.
+    if config.SEASON_CUTOFF_MD:
+        floor = 0.85 * per_year["game_dates"].median()
+    else:
+        floor = MIN_GAME_DATES_FULL_SEASON
+    incomplete = per_year[per_year["game_dates"] < floor]
     if not incomplete.empty:
-        print("\n*** WARNING: seasons below "
-              f"{MIN_GAME_DATES_FULL_SEASON} game dates look incomplete ***")
+        print(f"\n*** WARNING: seasons below {floor:.0f} game dates "
+              "look short of their siblings ***")
         print(incomplete[["game_year", "game_dates", "pitches",
                           "first_date", "last_date"]].to_string(index=False))
         print("Cross-season comparisons will be misleading until these finish.")

@@ -36,9 +36,9 @@ Thumbs.db
 *.csv
 
 # Analysis intermediates (parquet snapshots are large; results CSVs are kept)
-data/analysis/
-!analysis/results/*.csv
-!analysis/results/*.json
+data/analysis*/
+!analysis/results*/*.csv
+!analysis/results*/*.json
 
 # Excalidraw
 excalidraw.log
