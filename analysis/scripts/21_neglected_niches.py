@@ -6,10 +6,10 @@ shape and varies only its scarcity.
 
 The shape space is cut into velocity x IVB x horizontal-break cells. Each cell
 is observed in all five seasons with a different league-wide usage share. A
-fixed-effects regression of outcome on log usage share, with a dummy for every
-cell, therefore asks: when this exact shape became rarer, did it get better?
-Cell fixed effects absorb everything permanent about the shape; year fixed
-effects absorb league-wide drift.
+fixed-effects regression of outcome on log usage share therefore asks: when
+this exact shape became rarer, did it get better? Cell fixed effects absorb
+everything permanent about the shape; year fixed effects absorb league-wide
+drift.
 """
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ import sys
 
 import numpy as np
 import pandas as pd
-import statsmodels.formula.api as smf
+import statsmodels.api as sm
 
 sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parents[2]))
 
@@ -67,21 +67,45 @@ def cell_panel(years: list[int]) -> pd.DataFrame:
 
 
 def scarcity_regressions(panel: pd.DataFrame) -> pd.DataFrame:
-    """Within-cell effect of scarcity on effectiveness."""
+    """Within-cell effect of scarcity on effectiveness.
+
+    Cell fixed effects are absorbed by weighted within-cell demeaning rather
+    than dummy coding: there are thousands of cells, and an explicit design
+    matrix would be tens of thousands of rows wide. Year effects stay as
+    dummies, and standard errors are clustered on cell.
+    """
     rows = []
     bal = panel[panel["balanced"]]
     if bal.empty or bal["game_year"].nunique() < 2:
         return pd.DataFrame()
     bal = bal.copy()
-    bal["year_f"] = bal["game_year"].astype(str)
+    year_dummies = pd.get_dummies(bal["game_year"].astype(str), prefix="yr",
+                                   drop_first=True, dtype=float)
+    bal = pd.concat([bal, year_dummies], axis=1)
+    year_cols = list(year_dummies.columns)
+
     for col in ["whiff_pct_rel", "csw_pct_rel", "rv100_rel", "xwobacon_rel"]:
         sub = bal.dropna(subset=[col, "log_usage"])
         if len(sub) < 100 or sub["cell_id"].nunique() < 20:
             continue
+        w = sub["pitches"].to_numpy(float)
+        cell = sub["cell_id"].to_numpy()
+        X = sub[["log_usage"] + year_cols].astype(float)
+        y = sub[col].astype(float)
+
+        # weighted demeaning within cell absorbs the cell fixed effects
+        wser = pd.Series(w, index=sub.index)
+        def _demean(frame):
+            num = (frame.mul(wser, axis=0)).groupby(cell).transform("sum")
+            den = wser.groupby(cell).transform("sum")
+            return frame - num.div(den, axis=0)
+
+        Xd = _demean(X)
+        yd = _demean(y.to_frame())[col]
         try:
-            m = smf.wls(f"{col} ~ log_usage + C(cell_id) + C(year_f)",
-                        data=sub, weights=sub["pitches"]).fit(
-                cov_type="cluster", cov_kwds={"groups": sub["cell_id"]})
+            m = sm.WLS(yd, sm.add_constant(Xd, has_constant="add"),
+                       weights=w).fit(cov_type="cluster",
+                                       cov_kwds={"groups": cell})
         except Exception as exc:  # pragma: no cover - defensive
             print(f"  scarcity model failed for {col}: {exc}")
             continue
