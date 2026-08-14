@@ -1,6 +1,6 @@
 {
-  "git_sha": "1fb9e74",
-  "total_pitches": 178017,
+  "git_sha": "46583c3",
+  "total_pitches": 3567640,
   "figures": [
     "fig01_dispersion_trends.png",
     "fig02_dispersion_contrast.png",
@@ -24,6 +24,8 @@
     "s2_shape_volume.csv",
     "s3_arsenal_diversity.csv",
     "s3_crowding.csv",
+    "s3_directional_convergence.csv",
+    "s3_newcomer_periphery.csv",
     "s4_family_ecology.csv",
     "s4_fine_type_ecology.csv",
     "s4_taxonomy_stability.csv",
@@ -34,8 +36,10 @@
     "s5_gbm_pdp.csv",
     "s5_most_unusual_pitches.csv",
     "s5_spline_models.csv",
+    "s5_within_between.csv",
     "s6_abandoned_niches.csv",
     "s6_cell_panel.csv",
+    "s6_scarcity_regression.csv",
     "s7_exposure_bins.csv",
     "s7_familiarity_models.csv",
     "s7_window_sensitivity.csv"

@@ -341,11 +341,14 @@ def main() -> None:
     scored = U.score_arsenal(arsenal, feats)
     scored = add_shrunk_outcomes(scored)
     scored.to_parquet(config.PARQUET_DIR / "arsenal_scored.parquet", index=False)
+    unusual = scored.copy()
+    unusual["pitcher_name"] = (unusual["pitcher"].map(D.pitcher_name_map())
+                               .fillna(unusual["pitcher"].astype(str)))
     D.save_result(
-        scored[["pitcher", "player_name", "family", "game_year", "pitches",
-                "uniq_maha", "uniq_knn", "uniq_pct", "uniq_decile",
-                "whiff_pct_eb", "csw_pct_eb", "rv100_eb", "xwobacon_eb"]]
-        .sort_values("uniq_pct", ascending=False).head(60).round(4),
+        unusual[["pitcher", "pitcher_name", "family", "game_year", "pitches",
+                 "uniq_maha", "uniq_knn", "uniq_pct", "uniq_decile",
+                 "whiff_pct_eb", "csw_pct_eb", "rv100_eb", "xwobacon_eb"]]
+        .sort_values("uniq_maha", ascending=False).head(60).round(4),
         "s5_most_unusual_pitches",
     )
 

@@ -1,6 +1,8 @@
 {
-  "git_sha": "1d43754",
+  "git_sha": "46583c3",
   "years": [
+    "2021",
+    "2022",
     "2023",
     "2024",
     "2025"
@@ -15,10 +17,10 @@
     "release_side_arm",
     "arm_angle"
   ],
-  "bootstrap_reps": 300,
-  "arsenal_rows_scored": 5588,
+  "bootstrap_reps": 2000,
+  "arsenal_rows_scored": 9191,
   "gbm_delta": {
-    "delta_log_loss": 0.00010393902331184979,
-    "delta_auc": -0.0002132748447817301
+    "delta_log_loss": 9.646726368262026e-05,
+    "delta_auc": -0.000175905548826627
   }
 }

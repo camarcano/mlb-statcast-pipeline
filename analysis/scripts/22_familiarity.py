@@ -211,8 +211,11 @@ def figure_familiarity(bins: pd.DataFrame, models: pd.DataFrame,
                  xlabel="Change in outcome rate (pp)")
 
     P.suptitle(fig, "Does familiarity blunt a pitch?",
-               "Batter fixed effects: identified from each hitter's own "
-               "well- and poorly-prepared moments, not differences between hitters")
+               "Left and centre are raw bins, unadjusted: the uptick at the "
+               "highest exposures is shape confounding, since the shapes a "
+               "hitter sees most are fastballs. The right panel is the "
+               "controlled estimate, identified from each hitter's own "
+               "well- and poorly-prepared moments.")
     P.finish(fig)
     P.save(fig, "fig14_familiarity")
 

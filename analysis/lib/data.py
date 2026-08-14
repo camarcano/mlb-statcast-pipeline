@@ -7,6 +7,7 @@ the backfill still writing to SQLite.
 from __future__ import annotations
 
 import json
+
 import subprocess
 from pathlib import Path
 
@@ -100,3 +101,17 @@ def save_result(df, name: str) -> Path:
     out = config.RESULTS_DIR / f"{name}.csv"
     df.to_csv(out, index=False)
     return out
+
+
+def pitcher_name_map() -> dict[int, str]:
+    """MLBAM pitcher id -> name, from the repo's roster file.
+
+    Savant's `player_name` column names the batter on a pitch row, never the
+    pitcher, so pitcher labels have to come from this side lookup. Missing ids
+    simply fall back to the raw number at display time.
+    """
+    path = config.REPO_ROOT / "data" / "pitcher_names.json"
+    if not path.exists():
+        return {}
+    raw = json.loads(path.read_text())
+    return {int(k): v for k, v in raw.items()}

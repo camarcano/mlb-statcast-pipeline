@@ -153,7 +153,9 @@ def build_arsenal_rows(pitches: pd.DataFrame, features: list[str],
     tallies = oc.aggregate_outcomes(pitches, keys).set_index(keys)
 
     meta = pd.DataFrame({
-        "player_name": g["player_name"].first(),
+        # NOTE: Savant's player_name is the *batter* on these rows, not the
+        # pitcher, so it is deliberately not carried onto arsenal rows. Pitcher
+        # names come from data/pitcher_names.json via pitcher_name_map().
         "p_throws": g["p_throws"].first(),
         "spin_axis_sin": g["spin_axis_sin"].mean(),
         "spin_axis_cos": g["spin_axis_cos"].mean(),
