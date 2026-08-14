@@ -1,5 +1,5 @@
 {
-  "git_sha": "d64b2a9",
+  "git_sha": "e0ae2e9",
   "years": [
     "2025"
   ],
@@ -13,6 +13,6 @@
     "release_side_arm",
     "arm_angle"
   ],
-  "bootstrap_reps": 40,
+  "bootstrap_reps": 2000,
   "grain": "pitcher-family-year arsenal rows"
 }

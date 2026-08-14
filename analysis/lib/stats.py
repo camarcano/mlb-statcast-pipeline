@@ -73,6 +73,43 @@ DISPERSION_FUNCS = {"sd": sd, "iqr": iqr, "robust_cv": robust_cv, "mad": mad_sca
 # --------------------------------------------------------------------------
 # resampling
 # --------------------------------------------------------------------------
+def _cluster_layout(clusters: np.ndarray):
+    """Precompute the grouping needed to resample whole clusters.
+
+    Returns None when there are too few clusters to bootstrap. The `singleton`
+    flag marks the common case where every cluster holds exactly one row (true
+    of arsenal rows, where a pitcher appears once per family-season); that case
+    reduces to an ordinary bootstrap and can skip index stitching entirely.
+    """
+    uniq, inverse, counts = np.unique(clusters, return_inverse=True,
+                                      return_counts=True)
+    if uniq.size < 5:
+        return None
+    if np.all(counts == 1):
+        return {"singleton": True, "n": int(clusters.size)}
+    order = np.argsort(inverse, kind="stable")
+    starts = np.zeros(uniq.size, dtype=int)
+    starts[1:] = np.cumsum(counts)[:-1]
+    return {"singleton": False, "order": order, "starts": starts,
+            "counts": counts, "n_clusters": int(uniq.size)}
+
+
+def _resample_indices(layout: dict, reps: int, rng):
+    """Yield `reps` index arrays, each a cluster-level resample of the rows."""
+    if layout["singleton"]:
+        n = layout["n"]
+        for _ in range(reps):
+            yield rng.integers(0, n, size=n)
+        return
+    order, starts, counts = layout["order"], layout["starts"], layout["counts"]
+    k = layout["n_clusters"]
+    for _ in range(reps):
+        picked = rng.integers(0, k, size=k)
+        yield order[np.concatenate(
+            [np.arange(starts[c], starts[c] + counts[c]) for c in picked]
+        )]
+
+
 def cluster_bootstrap_ci(
     df: pd.DataFrame,
     value_col: str,
@@ -88,19 +125,15 @@ def cluster_bootstrap_ci(
     correlated observations, so naive bootstrap CIs would be far too narrow.
     """
     rng = np.random.default_rng(seed)
-    point = stat_func(df[value_col].to_numpy())
-    clusters = df[cluster_col].to_numpy()
-    uniq = np.unique(clusters)
-    if uniq.size < 5:
-        return point, np.nan, np.nan
-    idx_by_cluster = {c: np.flatnonzero(clusters == c) for c in uniq}
     values = df[value_col].to_numpy()
+    point = stat_func(values)
+    clusters = df[cluster_col].to_numpy()
+    layout = _cluster_layout(clusters)
+    if layout is None:
+        return point, np.nan, np.nan
 
-    draws = np.empty(reps)
-    for i in range(reps):
-        picked = rng.choice(uniq, size=uniq.size, replace=True)
-        idx = np.concatenate([idx_by_cluster[c] for c in picked])
-        draws[i] = stat_func(values[idx])
+    draws = np.array([stat_func(values[idx])
+                      for idx in _resample_indices(layout, reps, rng)])
     draws = draws[np.isfinite(draws)]
     if draws.size < 50:
         return point, np.nan, np.nan
@@ -128,21 +161,17 @@ def cluster_bootstrap_contrast(
     fa, fb = stat_func(df_a[value_col].to_numpy()), stat_func(df_b[value_col].to_numpy())
     point = (fb / fa - 1.0) if (relative and fa) else (fb - fa)
 
-    def _prep(d):
-        cl = d[cluster_col].to_numpy()
-        u = np.unique(cl)
-        return u, {c: np.flatnonzero(cl == c) for c in u}, d[value_col].to_numpy()
-
-    ua, ia, va = _prep(df_a)
-    ub, ib, vb = _prep(df_b)
-    if ua.size < 5 or ub.size < 5:
+    la = _cluster_layout(df_a[cluster_col].to_numpy())
+    lb = _cluster_layout(df_b[cluster_col].to_numpy())
+    if la is None or lb is None:
         return {"point": point, "lo": np.nan, "hi": np.nan, "p_two_sided": np.nan}
+    va, vb = df_a[value_col].to_numpy(), df_b[value_col].to_numpy()
 
     draws = np.empty(reps)
-    for i in range(reps):
-        sa = va[np.concatenate([ia[c] for c in rng.choice(ua, ua.size, replace=True)])]
-        sb = vb[np.concatenate([ib[c] for c in rng.choice(ub, ub.size, replace=True)])]
-        qa, qb = stat_func(sa), stat_func(sb)
+    gen_a = _resample_indices(la, reps, rng)
+    gen_b = _resample_indices(lb, reps, rng)
+    for i, (ia, ib) in enumerate(zip(gen_a, gen_b)):
+        qa, qb = stat_func(va[ia]), stat_func(vb[ib])
         draws[i] = (qb / qa - 1.0) if (relative and qa) else (qb - qa)
     draws = draws[np.isfinite(draws)]
     if draws.size < 50:
