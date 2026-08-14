@@ -89,6 +89,60 @@ def contrast_table(arsenal: pd.DataFrame, feats: list[str], reps: int,
     return df
 
 
+def primary_endpoint(ars: pd.DataFrame, feats, base_year, final_year,
+                     reps: int) -> pd.DataFrame:
+    """The pre-specified endpoint: one number, and one test, per family.
+
+    Testing all 8 features separately costs power twice over -- each contrast
+    uses only two of the five seasons, and 56 tests then face a multiplicity
+    correction. This pools the features instead: pitchers are resampled once per
+    replicate and *all* features recomputed on that same resample, so the
+    correlation between (say) spin and velocity is carried through rather than
+    assumed away. The statistic is the median % change in dispersion across
+    features, which is what the study set out to measure.
+    """
+    rng = np.random.default_rng(config.SEED)
+    rows = []
+    for family, fam_df in ars.groupby("family"):
+        da = fam_df[fam_df["game_year"] == base_year]
+        db = fam_df[fam_df["game_year"] == final_year]
+        if len(da) < 50 or len(db) < 50:
+            continue
+        cols = [f for f in feats if f in fam_df.columns
+                and da[f].notna().sum() >= 50 and db[f].notna().sum() >= 50]
+        if not cols:
+            continue
+        A, B = da[cols].to_numpy(float), db[cols].to_numpy(float)
+
+        def median_change(a: np.ndarray, b: np.ndarray) -> float:
+            sa = np.nanstd(a, axis=0, ddof=1)
+            sb = np.nanstd(b, axis=0, ddof=1)
+            with np.errstate(divide="ignore", invalid="ignore"):
+                return float(np.nanmedian(np.where(sa > 0, sb / sa - 1.0, np.nan)))
+
+        point = median_change(A, B)
+        draws = np.empty(reps)
+        for i in range(reps):
+            ia = rng.integers(0, A.shape[0], A.shape[0])
+            ib = rng.integers(0, B.shape[0], B.shape[0])
+            draws[i] = median_change(A[ia], B[ib])
+        draws = draws[np.isfinite(draws)]
+        lo, hi = np.percentile(draws, [2.5, 97.5])
+        p = 2 * min((draws <= 0).mean(), (draws >= 0).mean())
+        rows.append({
+            "family": family, "n_features": len(cols),
+            "median_pct_change": 100 * point,
+            "lo_pct": 100 * lo, "hi_pct": 100 * hi,
+            "p_boot": min(1.0, float(p)),
+            "n_base": len(da), "n_final": len(db),
+        })
+    df = pd.DataFrame(rows)
+    if not df.empty:
+        df["sig_fdr"] = S.bh_fdr(df["p_boot"].to_numpy(), config.FDR_Q)
+        df = df.sort_values("median_pct_change")
+    return df
+
+
 def spin_sensitivity(pitches_dir, feats, base_year, final_year) -> pd.DataFrame:
     """Spin dispersion excluding the pre-enforcement portion of 2021.
 
@@ -200,20 +254,18 @@ def main() -> None:
     contr = contrast_table(arsenal, feats, reps, base_year, final_year)
     D.save_result(contr, "s1_dispersion_contrast")
 
-    # primary endpoint: one number per family, median across features
-    if not contr.empty:
-        primary = (
-            contr[contr["stat"] == "sd"]
-            .groupby("family")["pct_change"].median()
-            .rename("median_pct_change_in_sd").reset_index()
-            .sort_values("median_pct_change_in_sd")
-        )
+    # primary endpoint: one tested number per family, pooled across features
+    primary = primary_endpoint(arsenal, feats, base_year, final_year, reps)
+    if not primary.empty:
         D.save_result(primary, "s1_primary_endpoint")
-        print("\n=== primary endpoint: median % change in SD across features ===")
+        print("\n=== primary endpoint: median % change in dispersion, "
+              f"{base_year} -> {final_year} ===")
         print(primary.to_string(index=False))
-        print(f"\nfeatures narrowing (FDR q={config.FDR_Q}): "
-              f"{int(((contr['stat']=='sd') & contr['sig_fdr'] & (contr['pct_change']<0)).sum())}"
-              f" / {int((contr['stat']=='sd').sum())}")
+        print(f"\nfamilies significant at FDR q={config.FDR_Q}: "
+              f"{int(primary['sig_fdr'].sum())} / {len(primary)}")
+    if not contr.empty:
+        print(f"per-feature contrasts significant at FDR q={config.FDR_Q}: "
+              f"{int(contr['sig_fdr'].sum())} / {len(contr)}")
 
     spin = spin_sensitivity(config.PARQUET_DIR / "pitches", feats,
                             base_year, final_year)

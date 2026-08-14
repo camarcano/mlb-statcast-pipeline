@@ -1,6 +1,8 @@
 {
-  "git_sha": "434f8b2",
+  "git_sha": "f9d7960",
   "years": [
+    "2021",
+    "2022",
     "2023",
     "2024",
     "2025"
@@ -15,6 +17,6 @@
     "release_side_arm",
     "arm_angle"
   ],
-  "bootstrap_reps": 1000,
+  "bootstrap_reps": 2000,
   "grain": "pitcher-family-year arsenal rows"
 }

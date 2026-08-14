@@ -1,13 +1,31 @@
 {
   "seasons": [
     {
+      "game_year": 2021,
+      "pitches": 712320,
+      "games": 2429,
+      "game_dates": 182,
+      "first_date": "2021-04-01",
+      "last_date": "2021-10-03",
+      "pitchers": 909
+    },
+    {
+      "game_year": 2022,
+      "pitches": 710210,
+      "games": 2430,
+      "game_dates": 179,
+      "first_date": "2022-04-07",
+      "last_date": "2022-10-05",
+      "pitchers": 871
+    },
+    {
       "game_year": 2023,
-      "pitches": 62044,
-      "games": 207,
-      "game_dates": 16,
+      "pitches": 720684,
+      "games": 2430,
+      "game_dates": 182,
       "first_date": "2023-03-30",
-      "last_date": "2023-04-14",
-      "pitchers": 437
+      "last_date": "2023-10-01",
+      "pitchers": 863
     },
     {
       "game_year": 2024,
@@ -28,9 +46,11 @@
       "pitchers": 873
     }
   ],
-  "total_pitches": 1486470,
+  "total_pitches": 3567640,
   "arm_angle_coverage_by_year": {
-    "2023": 0.9885,
+    "2021": 0.9647,
+    "2022": 0.9912,
+    "2023": 0.9867,
     "2024": 0.992,
     "2025": 0.9948
   },
@@ -46,7 +66,5 @@
     "release_side_arm",
     "arm_angle"
   ],
-  "incomplete_seasons": [
-    2023
-  ]
+  "incomplete_seasons": []
 }

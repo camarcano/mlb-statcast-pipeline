@@ -23,6 +23,7 @@ import sys
 
 import numpy as np
 import pandas as pd
+from scipy.stats import wilcoxon
 from sklearn.neighbors import NearestNeighbors
 
 sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parents[2]))
@@ -154,6 +155,54 @@ def directional_convergence(pitches_dir, feats: list[str],
     return pd.DataFrame(rows)
 
 
+def newcomer_periphery(arsenal_z: pd.DataFrame, feats: list[str]) -> pd.DataFrame:
+    """Are arriving pitchers stranger than the ones already here?
+
+    This reconciles the study's two headline results. Incumbents drift toward
+    the league centre every season (directional convergence), yet the spread of
+    the league as a whole does not shrink. Something must be refilling the
+    edges. The natural candidate is turnover: if pitchers appearing for the
+    first time sit further from the centre than established ones, the league
+    keeps its variety through replacement even while individuals converge.
+
+    Distance is measured in the same standardized shape space, against the
+    centre of that season's family, so newcomers and incumbents are judged on
+    identical terms.
+    """
+    d = arsenal_z.dropna(subset=feats).copy()
+    first_seen = d.groupby("pitcher")["game_year"].transform("min")
+    d["is_newcomer"] = d["game_year"] == first_seen
+    years = sorted(d["game_year"].unique())
+
+    rows = []
+    for (family, year), g in d.groupby(["family", "game_year"]):
+        # the earliest season cannot distinguish debuts from incumbents
+        if year == years[0] or len(g) < 40:
+            continue
+        centre = g[feats].to_numpy(float).mean(axis=0)
+        dist = np.linalg.norm(g[feats].to_numpy(float) - centre, axis=1)
+        new, old = dist[g["is_newcomer"].to_numpy()], dist[~g["is_newcomer"].to_numpy()]
+        if new.size < 10 or old.size < 10:
+            continue
+        rows.append({
+            "family": family, "game_year": int(year),
+            "n_newcomers": int(new.size), "n_established": int(old.size),
+            "newcomer_dist": float(new.mean()),
+            "established_dist": float(old.mean()),
+            "pct_further": float(100 * (new.mean() / old.mean() - 1.0)),
+        })
+    df = pd.DataFrame(rows)
+    if df.empty:
+        return df
+    # one paired test across family-seasons: are newcomers further out?
+    diff = df["newcomer_dist"] - df["established_dist"]
+    stat, p = wilcoxon(diff) if len(diff) >= 6 else (np.nan, np.nan)
+    df.attrs["paired_p"] = float(p)
+    df.attrs["median_pct_further"] = float(df["pct_further"].median())
+    df.attrs["frac_further"] = float((diff > 0).mean())
+    return df
+
+
 def figure_convergence(crowd: pd.DataFrame, div_summary: pd.DataFrame,
                        direction: pd.DataFrame, years: list[int]) -> None:
     """fig06 - crowding, arsenal entropy and directional drift."""
@@ -228,6 +277,17 @@ def main() -> None:
 
     per_pitcher, div_summary = arsenal_diversity(arsenal)
     D.save_result(div_summary, "s3_arsenal_diversity")
+
+    newcomers = newcomer_periphery(az, feats)
+    if not newcomers.empty:
+        D.save_result(newcomers, "s3_newcomer_periphery")
+        print("\n=== do arriving pitchers sit further from the centre? ===")
+        print(newcomers.groupby("game_year")[
+            ["newcomer_dist", "established_dist", "pct_further"]].mean().round(3).to_string())
+        print(f"  family-seasons where newcomers are further out: "
+              f"{newcomers.attrs['frac_further']:.0%}"
+              f"   median gap: {newcomers.attrs['median_pct_further']:+.1f}%"
+              f"   paired p = {newcomers.attrs['paired_p']:.4g}")
 
     direction = directional_convergence(config.PARQUET_DIR / "pitches", feats, years)
     if not direction.empty:

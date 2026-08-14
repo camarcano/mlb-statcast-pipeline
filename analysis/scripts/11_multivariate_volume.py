@@ -62,6 +62,60 @@ def league_volume_table(arsenal_z: pd.DataFrame, feats: list[str]) -> pd.DataFra
     return pd.DataFrame(rows)
 
 
+def combined_volume_change(arsenal_z: pd.DataFrame, feats: list[str],
+                           base_year: int, final_year: int,
+                           reps: int) -> dict:
+    """Pool the per-family volume changes into a single test.
+
+    Six separate family tests are each underpowered -- roughly 150-500 pitchers
+    per family-season -- and correcting them for multiplicity makes that worse.
+    But they are six looks at one question, and if pitch design is compressing
+    shape space the changes should share a sign. This resamples pitchers inside
+    every family-season jointly and averages the resulting log-volume changes,
+    giving one number with one interval.
+
+    Secondary and exploratory: the per-family endpoints were fixed in advance,
+    this pooling was added after seeing that the family estimates were
+    consistently negative but individually inconclusive.
+    """
+    rng = np.random.default_rng(config.SEED)
+    mats = []
+    for family, fam_df in arsenal_z.groupby("family"):
+        a = fam_df[fam_df["game_year"] == base_year][feats].to_numpy(float)
+        b = fam_df[fam_df["game_year"] == final_year][feats].to_numpy(float)
+        a, b = a[np.isfinite(a).all(axis=1)], b[np.isfinite(b).all(axis=1)]
+        if a.shape[0] >= 40 and b.shape[0] >= 40:
+            mats.append((family, a, b))
+    if len(mats) < 3:
+        return {}
+
+    def mean_change(sampler=None) -> float:
+        vals = []
+        for _, a, b in mats:
+            if sampler is None:
+                sa, sb = a, b
+            else:
+                sa = a[sampler(a.shape[0])]
+                sb = b[sampler(b.shape[0])]
+            vals.append(S.log_det_cov(sb) - S.log_det_cov(sa))
+        return float(np.nanmean(vals))
+
+    point = mean_change()
+    draws = np.array([mean_change(lambda n: rng.integers(0, n, n))
+                      for _ in range(reps)])
+    draws = draws[np.isfinite(draws)]
+    lo, hi = np.percentile(draws, [2.5, 97.5])
+    p = 2 * min((draws <= 0).mean(), (draws >= 0).mean())
+    return {
+        "n_families": len(mats),
+        "mean_delta_log_det": point,
+        "lo": float(lo), "hi": float(hi),
+        "p_boot": min(1.0, float(p)),
+        # a log-volume change spread over d axes is this much per axis
+        "equiv_linear_pct": 100 * (np.exp(point / len(feats)) - 1.0),
+    }
+
+
 def bootstrap_logdet_change(arsenal_z: pd.DataFrame, feats: list[str],
                             base_year: int, final_year: int,
                             reps: int) -> pd.DataFrame:
@@ -170,6 +224,17 @@ def main() -> None:
         print("=== change in shape-space log-volume, "
               f"{years[0]} → {years[-1]} ===")
         print(delta.to_string(index=False))
+
+    combined = combined_volume_change(az, feats, years[0], years[-1], reps)
+    if combined:
+        (config.RESULTS_DIR / "s2_combined_volume.json").write_text(
+            json.dumps(combined, indent=2))
+        print("\n=== pooled across families (secondary) ===")
+        print(f"  mean change in log-volume: {combined['mean_delta_log_det']:+.3f} "
+              f"[{combined['lo']:+.3f}, {combined['hi']:+.3f}]"
+              f"  p = {combined['p_boot']:.4g}")
+        print(f"  equivalent to {combined['equiv_linear_pct']:+.2f}% per shape "
+              f"axis, across {combined['n_families']} families")
 
     figure_volume(vol, league, years)
     D.write_meta("s2_volume", {"years": years, "features": feats,
