@@ -1,0 +1,7 @@
+family,delta_log_det,lo,hi,p_boot,equiv_linear_pct,sig_fdr
+CH,0.0,,,1.0,0.0,False
+CU,0.0,,,1.0,0.0,False
+FC,0.0,,,1.0,0.0,False
+FF,0.0,,,0.8,0.0,False
+SI,0.0,,,1.0,0.0,False
+SLV,0.0,,,1.0,0.0,False

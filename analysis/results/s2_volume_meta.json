@@ -1,0 +1,17 @@
+{
+  "git_sha": "d64b2a9",
+  "years": [
+    "2025"
+  ],
+  "features": [
+    "release_speed",
+    "ivb",
+    "hb_arm",
+    "release_spin_rate",
+    "release_extension",
+    "release_pos_z",
+    "release_side_arm",
+    "arm_angle"
+  ],
+  "bootstrap_reps": 30
+}

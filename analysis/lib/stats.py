@@ -286,19 +286,41 @@ def eb_shrink_rate(successes: np.ndarray, trials: np.ndarray) -> np.ndarray:
 
 def eb_shrink_mean(values: np.ndarray, counts: np.ndarray,
                    obs_sd: float | None = None) -> np.ndarray:
-    """Normal-normal shrinkage of per-unit means toward the grand mean."""
+    """Normal-normal shrinkage of per-unit means toward the grand mean.
+
+    When the within-unit noise SD is not supplied it is identified from how the
+    squared deviations scale with 1/n across units: a unit's squared deviation
+    has expectation (between-unit variance) + (noise variance)/n, so an OLS fit
+    of squared deviations on 1/n recovers both terms. Assuming instead that all
+    observed spread is noise would shrink every unit onto the grand mean and
+    destroy the signal being measured.
+    """
     v = np.asarray(values, float)
     n = np.asarray(counts, float)
     ok = np.isfinite(v) & (n > 0)
     if ok.sum() < 10:
         return v
     mu = float(np.average(v[ok], weights=n[ok]))
-    total_var = float(np.average((v[ok] - mu) ** 2, weights=n[ok]))
+    dev2 = (v[ok] - mu) ** 2
+    inv_n = 1.0 / n[ok]
+
     if obs_sd is None:
-        # infer within-unit noise from the count-weighted variance structure
-        obs_sd = np.sqrt(max(total_var, 1e-12)) * np.sqrt(float(np.mean(n[ok])))
-    within = obs_sd ** 2 / np.maximum(n, 1)
-    between = max(total_var - float(np.mean(within[ok])), 1e-12)
+        X = np.column_stack([np.ones(inv_n.size), inv_n])
+        try:
+            coef, *_ = np.linalg.lstsq(X, dev2, rcond=None)
+            between_hat, noise_var = float(coef[0]), float(coef[1])
+        except np.linalg.LinAlgError:
+            between_hat, noise_var = float(dev2.mean()), 0.0
+        if not np.isfinite(noise_var) or noise_var <= 0:
+            # no detectable count-dependence: treat the spread as real signal
+            noise_var = 0.0
+        between = max(between_hat, 1e-12)
+    else:
+        noise_var = float(obs_sd) ** 2
+        between = max(float(np.average(dev2, weights=n[ok]))
+                      - noise_var * float(np.mean(inv_n)), 1e-12)
+
+    within = noise_var / np.maximum(n, 1)
     w = between / (between + within)
     out = v.copy()
     out[ok] = mu + w[ok] * (v[ok] - mu)

@@ -1,0 +1,12 @@
+{
+  "git_sha": "d64b2a9",
+  "years": [
+    "2025"
+  ],
+  "cell_bins": {
+    "velo": 2.0,
+    "ivb": 4.0,
+    "hb": 4.0
+  },
+  "min_cell_pitches": 500
+}

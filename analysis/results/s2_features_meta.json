@@ -1,0 +1,32 @@
+{
+  "git_sha": "d64b2a9",
+  "years": [
+    2025
+  ],
+  "pitch_counts": [
+    {
+      "game_year": 2025,
+      "pitches": 215287
+    }
+  ],
+  "arsenal_rows": 808,
+  "shape_features": [
+    "release_speed",
+    "ivb",
+    "hb_arm",
+    "release_spin_rate",
+    "release_extension",
+    "release_pos_z",
+    "release_side_arm",
+    "arm_angle"
+  ],
+  "arm_angle_included": true,
+  "handedness_check": [
+    {
+      "sinker_hb_arm_mean_R": 15.311554765938107,
+      "sinker_hb_arm_mean_L": 15.48457627118644,
+      "passed": true,
+      "game_year": 2025
+    }
+  ]
+}

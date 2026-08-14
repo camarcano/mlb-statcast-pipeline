@@ -1,0 +1,29 @@
+{
+  "seasons": [
+    {
+      "game_year": 2025,
+      "pitches": 178017,
+      "games": 607,
+      "game_dates": 48,
+      "first_date": "2025-03-18",
+      "last_date": "2025-05-11",
+      "pitchers": 585
+    }
+  ],
+  "total_pitches": 178017,
+  "arm_angle_coverage_by_year": {
+    "2025": 0.9943
+  },
+  "arm_angle_in_feature_vector": true,
+  "sweeper_labels_retroactive": true,
+  "shape_features": [
+    "release_speed",
+    "ivb",
+    "hb_arm",
+    "release_spin_rate",
+    "release_extension",
+    "release_pos_z",
+    "release_side_arm",
+    "arm_angle"
+  ]
+}

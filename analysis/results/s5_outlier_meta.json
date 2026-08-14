@@ -1,0 +1,22 @@
+{
+  "git_sha": "d64b2a9",
+  "years": [
+    "2025"
+  ],
+  "features": [
+    "release_speed",
+    "ivb",
+    "hb_arm",
+    "release_spin_rate",
+    "release_extension",
+    "release_pos_z",
+    "release_side_arm",
+    "arm_angle"
+  ],
+  "bootstrap_reps": 200,
+  "arsenal_rows_scored": 808,
+  "gbm_delta": {
+    "delta_log_loss": 0.0008439996091810231,
+    "delta_auc": -0.0015979453010807054
+  }
+}

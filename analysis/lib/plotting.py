@@ -97,7 +97,7 @@ def direct_label(ax, x, y, text, color, dx=0.08, **kw):
     """Label a series at its right end rather than in a legend box."""
     ax.annotate(text, xy=(x, y), xytext=(x + dx, y), color=color,
                 fontsize=8.5, va="center", fontweight="600",
-                annotate_clip=False, **kw)
+                annotation_clip=False, **kw)
 
 
 def band(ax, x, lo, hi, color, alpha=0.14):
@@ -120,10 +120,25 @@ def zero_line(ax, horizontal=True):
 
 
 def suptitle(fig, title, subtitle=None):
-    fig.suptitle(title, x=0.01, ha="left", fontsize=13, fontweight="600", color=INK)
+    """Left-aligned title with an optional deck line beneath it.
+
+    Positions are in figure coordinates measured down from the top, so the deck
+    never collides with the title regardless of figure height.
+    """
+    h = fig.get_size_inches()[1]
+    title_y = 1 - 0.28 / h
+    fig.text(0.008, title_y, title, ha="left", va="top",
+             fontsize=13, fontweight="600", color=INK)
     if subtitle:
-        fig.text(0.01, 0.985, subtitle, ha="left", va="top",
+        fig.text(0.008, title_y - 0.30 / h, subtitle, ha="left", va="top",
                  fontsize=9, color=INK_SECONDARY)
+
+
+def finish(fig, bottom: float = 0.0):
+    """tight_layout leaving exact room for the title block (and legend)."""
+    h = fig.get_size_inches()[1]
+    top = 1 - 0.70 / h
+    fig.tight_layout(rect=[0, bottom, 1, top])
 
 
 def save(fig, name: str) -> str:
