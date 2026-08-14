@@ -22,6 +22,9 @@ from analysis import config
 from analysis.lib import data as D
 from analysis.lib import taxonomy
 
+# A full modern regular season spans roughly 185 distinct game dates.
+MIN_GAME_DATES_FULL_SEASON = 150
+
 PHYSICS_COLS = [
     "release_speed", "release_spin_rate", "spin_axis", "pfx_x", "pfx_z",
     "release_pos_x", "release_pos_z", "release_extension", "arm_angle",
@@ -70,6 +73,16 @@ def main() -> None:
     )
     arm_angle_ok = bool((arm_cov >= config.ARM_ANGLE_COVERAGE_MIN).all())
 
+    # A season still being downloaded looks like a real season to every
+    # downstream script, and would silently distort every cross-year contrast.
+    incomplete = per_year[per_year["game_dates"] < MIN_GAME_DATES_FULL_SEASON]
+    if not incomplete.empty:
+        print("\n*** WARNING: seasons below "
+              f"{MIN_GAME_DATES_FULL_SEASON} game dates look incomplete ***")
+        print(incomplete[["game_year", "game_dates", "pitches",
+                          "first_date", "last_date"]].to_string(index=False))
+        print("Cross-season comparisons will be misleading until these finish.")
+
     # --- pitch-type label stability ----------------------------------------
     types = con.execute(f"""
         SELECT game_year, pitch_type, COUNT(*) AS pitches {base}
@@ -99,6 +112,7 @@ def main() -> None:
         "arm_angle_in_feature_vector": arm_angle_ok,
         "sweeper_labels_retroactive": sweeper_retro,
         "shape_features": config.SHAPE_FEATURES + (["arm_angle"] if arm_angle_ok else []),
+        "incomplete_seasons": [int(y) for y in incomplete["game_year"]],
     }
     (config.RESULTS_DIR / "data_manifest.json").write_text(
         json.dumps(manifest, indent=2, default=str)

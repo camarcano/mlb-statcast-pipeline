@@ -115,7 +115,8 @@ def figure_volume(vol: pd.DataFrame, league: pd.DataFrame, years: list[int]) -> 
     P.style_axis(ax, title="Shape-space log-volume",
                  ylabel=f"Δ log-determinant vs {years[0]}")
     P.year_axis(ax, years)
-    ax.legend(ncol=2, fontsize=7.5)
+    if ax.get_legend_handles_labels()[0]:
+        ax.legend(ncol=2, fontsize=7.5)
 
     ax = axes[1]
     for fam in fams:

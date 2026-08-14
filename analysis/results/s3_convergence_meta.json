@@ -1,6 +1,8 @@
 {
-  "git_sha": "d64b2a9",
+  "git_sha": "27cde14",
   "years": [
+    "2023",
+    "2024",
     "2025"
   ],
   "features": [
@@ -14,5 +16,5 @@
     "arm_angle"
   ],
   "min_pitches_directional": 200,
-  "pitcher_years": 145
+  "pitcher_years": 950
 }

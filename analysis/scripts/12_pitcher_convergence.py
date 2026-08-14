@@ -174,7 +174,8 @@ def figure_convergence(crowd: pd.DataFrame, div_summary: pd.DataFrame,
     P.style_axis(ax, title="Crowding of the shape space",
                  ylabel=f"% change in nearest-neighbour distance vs {years[0]}")
     P.year_axis(ax, years)
-    ax.legend(ncol=2, fontsize=7.5)
+    if ax.get_legend_handles_labels()[0]:
+        ax.legend(ncol=2, fontsize=7.5)
 
     ax = axes[1]
     if not div_summary.empty:
