@@ -1,9 +1,13 @@
 {
-  "git_sha": "27cde14",
+  "git_sha": "434f8b2",
   "rows_by_year": [
     {
+      "game_year": 2022,
+      "pitches": 2030
+    },
+    {
       "game_year": 2023,
-      "pitches": 37429
+      "pitches": 717672
     },
     {
       "game_year": 2024,

@@ -179,7 +179,8 @@ def figure_contrast(contr: pd.DataFrame, years: list[int]) -> None:
         ax.set_xlabel(f"% change in SD, {years[0]}→{years[-1]}", fontsize=8)
     P.suptitle(fig, "Change in league-wide spread, first season to last",
                "Bars left of zero = pitchers converged on that characteristic; "
-               "whiskers are 95% pitcher-bootstrap intervals")
+               "whiskers are 95% pitcher-bootstrap intervals. "
+               "Note each panel sets its own horizontal scale")
     P.finish(fig)
     P.save(fig, "fig02_dispersion_contrast")
 

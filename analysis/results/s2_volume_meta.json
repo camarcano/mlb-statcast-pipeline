@@ -1,6 +1,8 @@
 {
-  "git_sha": "d64b2a9",
+  "git_sha": "434f8b2",
   "years": [
+    "2023",
+    "2024",
     "2025"
   ],
   "features": [
@@ -13,5 +15,5 @@
     "release_side_arm",
     "arm_angle"
   ],
-  "bootstrap_reps": 30
+  "bootstrap_reps": 200
 }
