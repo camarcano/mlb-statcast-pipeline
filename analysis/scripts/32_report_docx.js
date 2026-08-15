@@ -19,8 +19,11 @@ const {
 const ROOT = path.resolve(__dirname, "..", "..");
 const ANALYSIS_DIR = path.join(ROOT, "analysis");
 const REPORT_DIR = path.join(ANALYSIS_DIR, "report");
-const MD = path.join(REPORT_DIR, "report.md");
-const OUT = path.join(REPORT_DIR, "pitch-homogeneity-report.docx");
+// defaults to the full study report; pass a markdown path to render another
+// document (the long-form article uses the same converter)
+const SRC = process.argv[2] || "report.md";
+const MD = path.isAbsolute(SRC) ? SRC : path.join(REPORT_DIR, SRC);
+const OUT = MD.replace(/\.md$/, ".docx");
 
 // US Letter, 1" margins -> content width in DXA (1440 per inch)
 const PAGE_W = 12240, MARGIN = 1440;
