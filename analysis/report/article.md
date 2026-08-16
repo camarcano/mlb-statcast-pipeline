@@ -1,101 +1,105 @@
-# Everyone Is Throwing the Same Pitch
+# Everyone Is Building the Same Slider
 
-**Six seasons and 3.1 million pitches say the league is converging — and that the pitchers who refuse to are getting paid for it.**
+**Six seasons. 3.1 million pitches. A league that keeps teaching itself the same shapes, and the pitchers who profit by ignoring it.**
 
 BY CARLOS MARCANO · DRAFT
 
-There's a moment in every pitching lab conversation where somebody pulls up a movement plot, points at a cluster of dots, and says some version of: *this is what a good slider looks like now.* And they're right — the target is real, it's measurable, and pitchers who hit it get better. But I've spent a few years watching those clusters get tighter, and a question started nagging at me. If everybody knows what a good slider looks like, and everybody can measure whether they've built one, what happens when everybody builds it?
+Two out of every three big-league pitchers move their best pitch toward the league average every year. I measured it across five consecutive pairs of seasons. It happened all five times, and 2026 is the strongest one yet.
 
-So I pulled every regular-season pitch from 2021 through 2026 — 3.1 million of them — with one rule set up front: because 2026 is only two-thirds played, every season gets cut off at August 13. Otherwise I'd be comparing a partial season to five complete ones and calling the calendar a discovery. Matched that way the six seasons land within 40,000 pitches of each other.
+That's the short version. The longer version has a twist I didn't see coming, and it involves rookies.
 
-What came back is not the simple story I expected, and the part that surprised me most had nothing to do with the pitchers already in the league.
+I pulled every regular-season pitch from 2021 through 2026, 3.1 million of them. The 2026 season is only two-thirds played, so I cut every season off at August 13. Without that cut I'd be comparing a partial season against five full ones and calling the calendar a finding. Matched this way, the six seasons stay within 40,000 pitches of each other.
 
-## The drift is real, and it's every single year
+## The drift
 
-Start with the most direct question: are individual pitchers moving toward the league-average version of their own pitch? For every pitcher appearing in back-to-back seasons, I found where his slider (or fastball, or changeup) sat in movement-and-velocity space, then measured which direction it moved the next year. Toward the league center, or away?
+For each pitcher who appears in back-to-back seasons, I located his slider (or fastball, or changeup) in movement-and-velocity space. Then I checked which way it moved the next year. Toward the league center, or away from it.
 
-There's a trap here worth one paragraph, because it's what separates a fake finding from a real one. Measurement noise alone produces apparent convergence — a guy who posted a fluky-high spin reading in April will "regress" toward average next year without changing a thing. So I measured his starting position on one half of his pitches and his movement on the other half. Independent noise in each half, and the artifact cancels. Then I built a null: run the identical calculation *within* a single season, where no real development can have happened, and see what the machinery spits out.
+One trap ruins this measurement. Random noise creates fake convergence. A pitcher who posts a lucky-high spin reading in April drifts back toward average next season without changing a thing. So I measured his starting position from one half of his pitches and his movement from the other half. The two halves carry independent noise, so the artifact cancels.
+
+Then I built a control. I ran the same calculation inside a single season, where no real development can have happened, and looked at what came out.
 
 ![Every season, about two-thirds of pitchers move toward the middle](figures/art01_convergence.png)
 
-The null lands at 50-57%, right about where a coin flip should. The real number is 61 to 69 percent, five seasons out of five, and 2026 is the highest of the bunch. Roughly two out of every three pitchers in this league are drifting toward the middle of their own pitch type, and the drift is not slowing down.
+The control sits between 50 and 57 percent, about where a coin flip belongs. The real number runs from 61 to 69 percent. Five seasons out of five.
 
-## The part that stopped me: the rookies are already there
+## The rookies are already there
 
-Here's where I had to check my assumptions.
+I expected turnover to refill the edges. Rookies arrive with strange arm slots, get sanded down over three years, and look like everybody else by 27. That was my assumption going in.
 
-If everyone in the league is converging but the league-wide spread isn't collapsing as fast, something has to be refilling the edges. The obvious candidate is turnover: rookies show up with weird arm slots and unpolished deliveries, spend three years getting sanded down, and by 27 they look like everybody else. That's the story I'd have told you before I ran this.
+It's wrong. Pitchers in their debut season sit about 5 percent closer to the center of their pitch type than established pitchers do. The paired test returns p = 0.0012.
 
-It's backwards. Pitchers in their **debut season sit closer to the center of their pitch type than the veterans do** — about 5% closer, consistently enough across family-seasons that the paired test comes back at p = 0.0012. The new arrivals are *more* league-standard, not less.
+Nobody is grinding the strange out of these arms after they arrive. The strange is gone before they get here. College programs, draft models, and player development departments have already aimed the slider at the same coordinates.
 
-Sit with that one. The development pipeline isn't grinding the strange out of pitchers after they arrive. It's delivering them pre-conformed. By the time a guy throws his first big-league pitch, some combination of college programs, draft models, and player-development departments has already pointed his slider at the same coordinates as everyone else's.
+One number cuts against all of this, and I want it on the table. Arsenals are getting wider, not narrower. Pitchers threw 3.08 distinct pitches at a meaningful rate in 2021 and 3.56 in 2026. The share of a pitcher's most-used pitch fell from 49 to 41 percent. Each individual pitch converges while the collection around it expands. Only the first half of that is a problem.
 
-One thing cuts against the headline, and I want to be careful with it: **arsenals are getting broader, not narrower.** Pitchers throw more distinct types, more evenly — 3.08 pitches at a meaningful clip in 2021, 3.56 in 2026, with the share of a guy's top pitch falling from 49% to 41%. So "homogenization" is the wrong word at the arsenal level. Variety *within* a pitcher is up; it's each individual pitch converging on a template. Only the second one is the problem.
+## What convergence costs
 
-## The sweeper paid the bill
-
-If pitches converge, what does it cost? This is the part I find genuinely fun, because the league already ran the experiment for us and the receipt is sitting right there in the sweeper.
+The sweeper shows the bill.
 
 ![The sweeper got popular and got worse. The changeup did the reverse.](figures/art02_usage_value.png)
 
-Look at the left panel and follow the years. The sweeper's run value relative to league average has gone down **every single season for six straight years** — +0.334, +0.265, +0.184, +0.162, +0.035, and now −0.014 — while its usage climbed from 19.4% of all pitches to 22.2%. In 2026, for the first time in this window, the sweeper is a below-average pitch by run value.
+Follow the years in the left panel. Sweeper run value against league average fell every season for six straight years: +0.334, +0.265, +0.184, +0.162, +0.035, and now −0.014. Usage climbed from 19.4 percent of all pitches to 22.2 percent across the same stretch. The sweeper is now a below-average pitch by run value for the first time in this window.
 
-And then usage finally turned down. The sweeper's share dropped 0.6 points this year, the first decline of the boom, arriving in the exact season its value hit zero. The market took six years to price it, but it priced it.
+Then usage turned down. Sweeper share dropped 0.6 points in 2026, the first decline of the boom, in the same season its value crossed zero. The market took six years to price the pitch. It priced it.
 
-This isn't just one pitch type. I tested it at a finer grain, chopping each family's movement space into small cells — two miles per hour by four inches of vertical break by four of horizontal — and asking whether *the same cell* performs worse in seasons when more pitchers live in it. Comparing a cell to itself across years, holding the shape constant: **when a shape gets crowded, hitters square it up harder.** Doubling a shape's usage costs about 6 points of expected wOBA on contact.
+One pitch type proves nothing, so I tested the idea at a finer grain. I cut each family's movement space into small cells: two miles per hour by four inches of vertical break by four inches of horizontal break. Then I asked whether the same cell performs worse in seasons when more pitchers occupy it. Cell and year effects absorb the obvious objections.
 
-## Why it works: hitters just need reps
+The answer is yes. When a shape gets crowded, hitters hit it harder. Doubling a shape's usage costs about 6 points of expected wOBA on contact.
 
-The mechanism turns out to be almost boringly human, which is why I believe it. For every pitch, I counted how many of that same shape the hitter had faced in the previous 30 days, then compared each hitter against *himself* — his well-prepared at-bats versus his unprepared ones — holding count, location, and the pitch's own quality fixed.
+## Hitters just need reps
+
+The mechanism is ordinary, which is why I trust it.
+
+For every pitch, I counted how many pitches of that same shape the hitter had faced in the previous 30 days. Then I compared each hitter against himself, his well-prepared at-bats against his unprepared ones, holding count, location, and pitch quality fixed.
 
 ![A pitch works worse once the hitter has seen it lately](figures/art04_familiarity.png)
 
-Doubling a hitter's recent exposure to a shape costs the pitcher about 0.46 percentage points of whiff rate, and the estimate barely moves at a 15-, 30-, or 60-day window. Here's the kicker: **the penalty is bigger for unusual pitches than ordinary ones.** A generic 94-mph four-seamer has no novelty to lose. A weird one does, and it bleeds that edge as hitters bank looks.
+Doubling a hitter's recent exposure costs the pitcher 0.46 percentage points of whiff rate. The estimate barely moves at a 15-day, 30-day, or 60-day window.
 
-That's the engine. As a shape spreads, every hitter's recent exposure to it rises and the shape stops paying. Crowding and familiarity are one phenomenon measured from two directions.
+The interaction matters more than the main effect. Strange pitches lose more to exposure than ordinary ones do. A generic 94-mph four-seamer has no novelty to spend. A strange pitch does, and it spends it as hitters bank looks.
 
-## So being weird is worth something
+Crowding and familiarity are one thing measured from opposite ends. A shape spreads, every hitter's recent exposure to it rises, the shape stops paying.
 
-If familiarity is a tax, scarcity should be a subsidy. It is.
+## Strange pitches pay
 
 ![The stranger the pitch, the more bats it misses](figures/art03_uniqueness.png)
 
-Sort every pitcher-season by how far its shape sits from the league norm and the whiff rate climbs steadily from the most ordinary tenth to the strangest: 23.2% up to 24.4%.
+Sort every pitcher-season by how far its shape sits from the league norm. Whiff rate climbs from 23.2 percent in the most ordinary tenth to 24.4 percent in the strangest.
 
-The obvious objection — and it's a good one — is selection. Maybe good pitchers just happen to throw weird pitches, and I'm measuring talent with extra steps. So I split it: how much comes from comparing *different pitchers*, versus following *the same pitcher* as his own pitch drifts from the norm?
+Selection is the obvious objection. Maybe good pitchers throw weird pitches and I'm measuring talent by a longer route. So I separated the two. One estimate compares different pitchers against each other. The other follows the same pitcher as his own pitch drifts from the norm across seasons.
 
-The two numbers come out at +1.78 and +1.43 points of whiff rate. Nearly identical. When a given pitcher's slider gets weirder, it misses more bats — and that can't be talent, because the pitcher is held fixed by construction.
+They come out at +1.78 and +1.43 points of whiff rate. When a pitcher's own slider gets stranger, it misses more bats. Talent can't explain that, because the pitcher stays fixed.
 
-One honest caveat, because it constrains what you do with this. I also fed the whole thing to a model predicting whiffs from velocity, movement, location and count, then added my "uniqueness" score on top. It added nothing. Zero — which makes sense, since uniqueness is calculated *from* those same features, so the model already had the information. The lesson isn't "be weird." It's **occupy a shape hitters aren't currently seeing**, and what makes that valuable is scarcity, not strangeness.
+Now the caveat, because it changes what you do with this. I gave a machine-learning model velocity, movement, location, and count, and asked it to predict whiffs. Then I added my uniqueness score on top. It added nothing. Zero improvement.
 
-## The changeup already figured this out
+That makes sense once you see it. Uniqueness gets calculated from those same shape features, so the model already held the information. What pays is scarcity. Occupy a shape hitters aren't seeing right now, and the strangeness takes care of itself.
 
-Which brings me to my favorite thing in this dataset. Go back to that second chart, right panel. The changeup was the most-abandoned offspeed pitch in the study: usage falling four straight years to a six-season low of 10.15%, second-worst relative run value of any family in 2025, and actively cannibalized by the splitter boom — pitchers who picked up a splitter cut their changeup usage 3 to 6 points in the adoption year.
+## The changeup already knew
 
-Then 2026 happened, and the changeup posted its best season on every measure at once. Usage up to 11.21%, the largest gain of any family. Whiff rate 29.8%, best of the six years. Expected wOBA on contact at .277, best of the six years. And a run value of +0.025 — the **first positive mark in six seasons**.
+The changeup was the most abandoned offspeed pitch in this study. Usage fell four straight years to a six-season low of 10.15 percent. It carried the second-worst relative run value of any family in 2025. Splitter adopters cannibalized it, cutting their own changeup usage by 3 to 6 points in the year they picked the splitter up.
 
-A pitch got abandoned into scarcity, became effective again because nobody was throwing it, and pitchers noticed within a single season. That's the whole thesis of this article, delivered by the league, unprompted, while I was still writing it.
+Then 2026 arrived and the changeup posted its best season on every measure at once. Usage 11.21 percent, the largest gain of any family. Whiff rate 29.8 percent, best of the six years. Expected wOBA on contact .277, best of the six years. Run value +0.025, the first positive mark in six seasons.
 
-It also explains something I'd found earlier and couldn't place. When I ranked the most unusual pitches thrown from *conventional* arm slots — filtering out submariners, whose weirdness is the delivery and isn't transferable advice — the list came back almost entirely changeups. Devin Williams' Airbender. Logan Webb's. Pedro Avila's. Trevor Richards'. The changeup resisted standardization because it was never a spin-and-shape pitch to begin with: it lives off velocity separation and tunneling, and you can't template that the way you template a sweeper.
+A pitch got abandoned into scarcity, turned effective again because almost nobody threw it, and pitchers noticed inside a single season.
 
-## One that didn't cooperate
+This also explains something I'd found and couldn't place. I ranked the strangest pitches thrown from conventional arm slots. Submariners came out of that list first. Their strangeness lives in the delivery, and you can't hand a delivery to another pitcher. The list came back almost entirely changeups. Devin Williams' Airbender. Logan Webb's. Pedro Avila's. Trevor Richards'. The changeup resisted standardization because it was never a spin-and-shape pitch. It runs on velocity separation and tunneling, and no model templates that the way it templates a sweeper.
 
-I'd be doing the thing I complain about if I only showed you the parts that fit.
+## The one I got wrong
 
-The "deathball" — the hard gyro slider with almost no horizontal break and a few inches of drop, the one Roki Sasaki and Ryne Nelson made famous — should be following the sweeper's arc. It's getting adopted fast: 168 pitchers throwing it in 2026, up from 159 last year, and its share of all slider-type pitches jumped from 1.5% to 2.2% this year alone.
+The deathball should be following the sweeper's path. It's the hard gyro slider with almost no horizontal break and a few inches of drop, the pitch Roki Sasaki and Ryne Nelson made famous. Adoption is climbing fast. 168 pitchers threw it in 2026, up from 159 last year, and its share of slider-type pitches went from 1.5 to 2.2 percent this season.
 
-Its edge over ordinary sliders has not eroded. It's bounced between +4 and +8 percentage points of whiff rate for four years with no trend I can defend. I had read that series as "peaked in 2023, declining since," and the 2026 number blew it up — three noisy points is not a trend, and I over-fitted it. Maybe the deathball is still scarce enough that crowding hasn't bitten. Maybe gyro spin is harder to standardize than sweep. I don't know yet, and this data can't tell me.
+Its edge over ordinary sliders hasn't eroded. It's bounced between +4 and +8 percentage points of whiff rate for four years with no trend I can defend. I read that series earlier as a peak in 2023 followed by decline. The 2026 number killed that reading. Three noisy points aren't a trend, and I fit a line to them anyway.
 
-## What I'd actually do with this
+Maybe gyro spin resists standardization the way the changeup does. Maybe the pitch stays scarce enough that crowding hasn't reached it. I don't know yet.
 
-If you run a pitching department, the actionable version is short. The outlier advantage shows up in *every* count state — significant in all four — yet outlier pitches get thrown barely a percentage point more often with two strikes than when behind. Nobody is deploying this on purpose.
+## What to do with this
 
-And the target should not be "weird." It should be "scarce." Those sound alike and aren't. There are movement cells in the sinker and cutter families that lost half their occupancy since 2021 while still beating league average — real estate the league walked away from that still pays rent.
+The outlier advantage shows up in every count state. I checked all four and it holds in each. Yet outlier pitches get thrown about one percentage point more often with two strikes than when the pitcher is behind. That gap should be far wider. Nobody is deploying these on purpose.
 
-The deeper point is that pitch design has a self-limiting mechanism baked in, and I don't think the industry has priced it. Every model telling you what a good slider looks like was trained on a league where that slider was rarer than it will be once everyone reads the model. The edge lives in the gap between when you find a shape and when everybody else does.
+Aim for scarce, not strange. Those two sound alike and aren't. Sinker and cutter movement cells exist that lost half their occupancy since 2021 and still beat league average. The league walked away from that real estate and it still pays rent.
 
-So I'll end where I like to, with the questions. How much of the sweeper's collapse was inevitable the moment it became teachable? Should a pitch-design department be optimizing for stuff, or for stuff *net of how many other guys throw it*? And if the changeup could come back from six years of neglect in one season, what else is sitting in the discard pile right now?
+Pitch design carries a self-limiting mechanism, and I don't think the industry prices it. Every model that tells you what a good slider looks like got trained on a league where that slider was rare. It gets less rare the moment everybody reads the model. The edge lives in the gap between finding a shape and everybody else finding it.
 
-I don't have those figured out. But I'm a lot less impressed by a movement plot that lands right in the middle of the cluster than I was six months ago.
+So: how much of the sweeper's collapse was fixed the moment the pitch became teachable? Should a pitching department optimize for stuff, or for stuff divided by the number of other arms throwing it? And if the changeup can come back from six years of neglect in one season, what else is sitting in the discard pile?
 
-*Data: Baseball Savant, 2021–2026 regular seasons, all seasons truncated at August 13 for comparability. Further reading: Driveline Baseball's work on pitch design and arsenal construction, Eno Sarris on Stuff+, and Baseball Prospectus on times-through-order familiarity effects.*
+*Data: Baseball Savant, 2021-2026 regular seasons, every season truncated at August 13 for comparability. Further reading: Driveline Baseball on pitch design, Eno Sarris on Stuff+, and Baseball Prospectus on times-through-order familiarity.*
