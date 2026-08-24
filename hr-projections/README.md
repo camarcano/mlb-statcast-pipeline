@@ -1,7 +1,8 @@
-# MLB team home run projections
+# MLB home run projections
 
-Projects how many home runs each of the 30 clubs finishes the regular season
-with, and how likely each is to lead the majors, from Statcast pitch-level data.
+Projects how many home runs each of the 30 clubs - and each hitter - finishes the
+regular season with, and the odds of leading the majors or clearing 40, from
+Statcast pitch-level data.
 
 The projection is player-level: every hitter gets a home run rate per plate
 appearance built from their own contact quality, those rates are weighted by how
@@ -60,8 +61,9 @@ either way. It also re-fetches the most recent two days every time, because a da
 first pulled while games were in progress gets recorded as complete while still
 missing innings.
 
-Each run writes `out\hr_projection_<date>.html` and a matching `.csv`, so you can
-keep the files and watch the race move.
+Each run writes four files into `out\`: `hr_projection_<date>.html` and `.csv` for
+the team race, and `hr_players_<date>.html` and `.csv` for individual hitters.
+Keep them and you can watch both races move.
 
 ## The command line, for more control
 
@@ -70,9 +72,11 @@ command is available in the virtual environment
 (`.venv\Scripts\hrproj.exe` on Windows, `.venv/bin/hrproj` elsewhere):
 
 ```bash
-hrproj project                      # update data, then project
+hrproj project                      # update data, then project team totals
 hrproj project --no-refresh         # skip the fetch, use the database as-is
 hrproj project --format json,csv,html
+hrproj leaders                      # individual hitters, with 40+ and 50+ odds
+hrproj leaders --milestone 45 --reach 0.05   # everyone with a 5% shot at 45
 hrproj players NYY                  # the hitters behind one club's number
 hrproj backtest --cutoff 2026-07-01 # out-of-sample score vs simpler methods
 hrproj backtest --cutoff 2026-07-01 --sweep
@@ -82,6 +86,26 @@ hrproj schedule-refresh             # re-cache the remaining schedule only
 By default the Statcast database lives at `data\savant.db` inside the checkout and
 nothing needs configuring. To keep it elsewhere, copy `.env.example` to `.env` and
 set `HRPROJ_STATCAST_DB`.
+
+### Individual hitters
+
+`hrproj leaders` projects every hitter and reports the odds of a milestone:
+
+```
+Hitter                    Tm     PA    HR     xHR    RoS    Proj   p10   p90     40+     50+
+Schwarber, Kyle          PHI    560    39    32.3    5.7    44.7    41    48   99.2%    5.5%
+Alvarez, Yordan          HOU    565    36    40.4    6.8    42.8    39    47   87.1%    2.5%
+```
+
+`RoS` is expected home runs in the rest of the season and `Proj` the final total.
+`--milestone N` changes the bar; `--reach 0.05` prints everyone with at least a 5%
+chance of clearing it instead of a fixed number of rows.
+
+Player and team projections come out of the *same* simulation - a club's remaining
+home runs are its hitters' remaining home runs, drawn once - so the two tables can
+never contradict each other. Note that a team's home runs to date can exceed the
+sum of its current hitters', because players who were traded away or sent down took
+theirs with them.
 
 ### Output
 
@@ -220,7 +244,7 @@ p10 and p90 are as far apart as they are.
 | `schedule.py` | StatsAPI remaining schedule, cache, offline fallback |
 | `park.py` | Park and opposing-staff home run factors |
 | `model.py` | Assembles per-team projection inputs |
-| `simulate.py` | Monte Carlo and finishing probabilities |
+| `simulate.py` | Monte Carlo, team and hitter, plus finishing and milestone probabilities |
 | `backtest.py` | Out-of-sample scoring and the parameter sweep |
 | `report.py` | Console, CSV, JSON and HTML output |
 | `cli.py` | The `hrproj` commands |

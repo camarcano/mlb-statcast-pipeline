@@ -145,3 +145,63 @@ def test_project_explains_how_to_backfill_an_empty_database(tmp_path, monkeypatc
     result = CliRunner().invoke(cli, ["project", "--no-schedule"])
     assert result.exit_code != 0
     assert "statcast backfill" in result.output
+
+
+def test_leaders_command_reports_milestone_odds(season, monkeypatch, tmp_path):
+    db, _ = season
+    monkeypatch.setenv("HRPROJ_STATCAST_DB", str(db))
+    monkeypatch.setenv("HRPROJ_CACHE_DB", str(tmp_path / "cache.db"))
+    monkeypatch.setenv("HRPROJ_OUT_DIR", str(tmp_path / "out"))
+
+    result = CliRunner().invoke(cli, [
+        "leaders", "--no-refresh", "--no-schedule", "--as-of", "2026-06-01",
+        "--sims", "300", "--milestone", "10", "--top", "5", "--format", "csv",
+    ])
+
+    assert result.exit_code == 0, result.output
+    assert "Projected individual home run totals" in result.output
+    assert "10+" in result.output
+    assert "chance of 10+ home runs" in result.output
+    assert (tmp_path / "out" / "hr_players_2026-06-01.csv").exists()
+
+
+def test_leaders_reach_option_sizes_the_table(season, monkeypatch, tmp_path):
+    """--reach prints everyone above a probability instead of a fixed row count."""
+    db, _ = season
+    monkeypatch.setenv("HRPROJ_STATCAST_DB", str(db))
+    monkeypatch.setenv("HRPROJ_CACHE_DB", str(tmp_path / "cache.db"))
+
+    invoke = lambda args: CliRunner().invoke(cli, [
+        "leaders", "--no-refresh", "--no-schedule", "--as-of", "2026-06-01",
+        "--sims", "300", "--milestone", "5", *args,
+    ])
+    strict = invoke(["--reach", "0.99"])
+    loose = invoke(["--reach", "0.01"])
+
+    assert strict.exit_code == 0 and loose.exit_code == 0
+    assert len(loose.output.splitlines()) > len(strict.output.splitlines())
+
+
+def test_leaders_reach_filters_by_probability_not_row_count(season, monkeypatch, tmp_path):
+    """Every hitter printed must actually clear the bar, in probability order or not."""
+    db, _ = season
+    monkeypatch.setenv("HRPROJ_STATCAST_DB", str(db))
+    monkeypatch.setenv("HRPROJ_CACHE_DB", str(tmp_path / "cache.db"))
+    monkeypatch.setenv("HRPROJ_OUT_DIR", str(tmp_path / "out"))
+
+    result = CliRunner().invoke(cli, [
+        "leaders", "--no-refresh", "--no-schedule", "--as-of", "2026-06-01",
+        "--sims", "400", "--milestone", "40", "--reach", "0.10", "--format", "csv",
+    ])
+    assert result.exit_code == 0, result.output
+
+    # The export keeps every hitter; only the console view is filtered.
+    written = pd.read_csv(tmp_path / "out" / "hr_players_2026-06-01.csv")
+    qualifying = written[written["p_40"] >= 0.10]
+    assert 0 < len(qualifying) < len(written)      # a real cut, not all or nothing
+
+    printed_rows = [
+        line for line in result.output.splitlines()
+        if line and line[0].isalpha() and line.rstrip().endswith("%")
+    ]
+    assert len(printed_rows) == len(qualifying)

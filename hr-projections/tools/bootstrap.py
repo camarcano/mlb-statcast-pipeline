@@ -166,11 +166,21 @@ def do_run(args) -> None:
     if season_row_count(settings["db"], settings["season"]) == 0:
         sys.exit("Still no data after the backfill - check the messages above.")
 
-    print("\nProjecting ...\n")
+    print("\nProjecting team totals ...\n")
     cmd = [python, "-m", "hrproj.cli", "project", "--format", "html,csv"]
     if args.sims:
         cmd += ["--sims", args.sims]
     run(cmd)
+
+    # The data is already current after the team run, so skip the second fetch.
+    print("\nProjecting individual hitters ...\n")
+    hitters = [
+        python, "-m", "hrproj.cli", "leaders", "--no-refresh",
+        "--format", "html,csv", "--top", "40",
+    ]
+    if args.sims:
+        hitters += ["--sims", args.sims]
+    run(hitters)
 
     report = newest_report(PROJECT_DIR / "out")
     if report and not args.no_open:

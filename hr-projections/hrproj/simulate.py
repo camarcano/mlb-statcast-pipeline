@@ -12,7 +12,7 @@ Independent Poisson draws add, so a team's remaining home runs can be drawn once
 from the season-total rate rather than game by game.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import numpy as np
 import pandas as pd
@@ -26,6 +26,7 @@ class SimulationResult:
     draws: dict[str, np.ndarray]  # team -> array of simulated final HR totals
     sims: int
     seed: int
+    players: pd.DataFrame = field(default_factory=pd.DataFrame)
 
 
 def simulate(projection: Projection) -> SimulationResult:
@@ -44,6 +45,8 @@ def simulate(projection: Projection) -> SimulationResult:
     else:
         environment = np.ones(sims)
 
+    player_frames: list[pd.DataFrame] = []
+
     for team in teams:
         ti = projection.teams[team]
         if ti.batters.empty or ti.games_remaining == 0:
@@ -58,9 +61,16 @@ def simulate(projection: Projection) -> SimulationResult:
         rate_draws = rng.beta(alpha, beta, size=(sims, len(alpha)))
         share_draws = rng.dirichlet(np.maximum(share * concentration, 1e-3), size=sims)
 
-        team_rate = (rate_draws * share_draws).sum(axis=1)
-        lam = team_rate * ti.pa_per_game * ti.context_sum * environment
-        draws[team] = ti.hr_to_date + rng.poisson(np.maximum(lam, 0.0))
+        # Plate appearances available to the whole club across the games left,
+        # scaled by the park and pitching it faces, then split between hitters.
+        team_pa = ti.pa_per_game * ti.context_sum * environment
+        player_lam = share_draws * rate_draws * team_pa[:, None]
+        player_hr = rng.poisson(np.maximum(player_lam, 0.0))
+
+        # A team's remaining home runs are its hitters' - drawn once, so the two
+        # views of the same simulation cannot contradict each other.
+        draws[team] = ti.hr_to_date + player_hr.sum(axis=1)
+        player_frames.append(_summarise_players(ti, player_hr, share_draws, params))
 
     matrix = np.column_stack([draws[t] for t in teams])
     lead_prob = _leader_probability(matrix)
@@ -86,7 +96,51 @@ def simulate(projection: Projection) -> SimulationResult:
         "projected_rank": order,
     }).sort_values("projected", ascending=False).reset_index(drop=True)
 
-    return SimulationResult(totals=totals, draws=draws, sims=sims, seed=params.seed)
+    players = (
+        pd.concat(player_frames, ignore_index=True)
+        if player_frames
+        else pd.DataFrame()
+    )
+    if not players.empty:
+        players = players.sort_values("projected", ascending=False).reset_index(drop=True)
+
+    return SimulationResult(
+        totals=totals, draws=draws, sims=sims, seed=params.seed, players=players
+    )
+
+
+def _summarise_players(
+    ti, player_hr: np.ndarray, share_draws: np.ndarray, params
+) -> pd.DataFrame:
+    """Reduce one team's per-hitter draws to a row each.
+
+    The draws are summarised here rather than returned: keeping every simulation
+    for every hitter in memory buys nothing once the percentiles are known.
+    """
+    hr_to_date = ti.batters["hr"].fillna(0).to_numpy(dtype=float)
+    finals = hr_to_date[None, :] + player_hr
+
+    summary = pd.DataFrame({
+        "team": ti.team,
+        "batter": ti.batters["batter"].to_numpy(),
+        "player_name": ti.batters["player_name"].to_numpy(),
+        "hr_to_date": hr_to_date.astype(int),
+        "pa": ti.batters["pa"].fillna(0).to_numpy(),
+        "xhr": ti.batters["xhr"].fillna(0).to_numpy(),
+        "rate": ti.batters["rate"].to_numpy(),
+        "games_remaining": ti.games_remaining,
+        "proj_pa": share_draws.mean(axis=0) * ti.pa_per_game * ti.games_remaining,
+        "expected_remaining": player_hr.mean(axis=0),
+        "projected": finals.mean(axis=0),
+        "p10": np.percentile(finals, 10, axis=0),
+        "median": np.percentile(finals, 50, axis=0),
+        "p90": np.percentile(finals, 90, axis=0),
+    })
+
+    for milestone in params.hr_milestones:
+        summary[f"p_{milestone}"] = (finals >= milestone).mean(axis=0)
+
+    return summary
 
 
 def _leader_probability(matrix: np.ndarray) -> np.ndarray:

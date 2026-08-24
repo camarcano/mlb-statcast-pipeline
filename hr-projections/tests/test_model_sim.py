@@ -182,3 +182,65 @@ def test_league_environment_widens_intervals_without_moving_the_odds(tmp_path):
     lead_without = without.totals.set_index("team")["p_lead"]
     for team in TEAMS:
         assert lead_with[team] == pytest.approx(lead_without[team], abs=0.05)
+
+
+def test_player_projections_are_coherent_with_the_team_total(projection):
+    """The team's remaining home runs are its hitters', drawn once - not twice."""
+    result = simulate(projection)
+    players = result.players
+    assert not players.empty
+
+    by_team = players.groupby("team")["expected_remaining"].sum()
+    for team in TEAMS:
+        ti = projection.teams[team]
+        # Same draws, so the two views agree up to Monte Carlo error only.
+        assert by_team[team] == pytest.approx(
+            result.draws[team].mean() - ti.hr_to_date, rel=1e-9
+        )
+        assert set(players[players["team"] == team]["batter"]) == set(ti.batters["batter"])
+
+
+def test_player_rows_are_sane(projection):
+    result = simulate(projection)
+    players = result.players
+
+    assert players["projected"].is_monotonic_decreasing        # sorted best first
+    assert (players["projected"] >= players["hr_to_date"]).all()
+    assert (players["p10"] <= players["median"]).all()
+    assert (players["median"] <= players["p90"]).all()
+    assert (players["proj_pa"] > 0).all()
+
+
+def test_milestone_probabilities_are_ordered(projection):
+    result = simulate(projection)
+    players = result.players
+
+    assert {"p_40", "p_50"} <= set(players.columns)
+    for col in ("p_40", "p_50"):
+        assert players[col].between(0, 1).all()
+    # Reaching 50 is never easier than reaching 40.
+    assert (players["p_40"] >= players["p_50"] - 1e-12).all()
+
+
+def test_milestones_are_configurable(projection):
+    from dataclasses import replace as dc_replace
+
+    result = simulate(dc_replace(
+        projection, params=projection.params.replace(hr_milestones=(10,))
+    ))
+    assert "p_10" in result.players.columns
+    assert "p_40" not in result.players.columns
+
+
+def test_a_hitter_who_has_already_cleared_the_bar_is_certain(tmp_path):
+    """Home runs already hit cannot be taken away by the simulation."""
+    db = tmp_path / "league.db"
+    write_pitches(db, synth_league(hr_talent={t: 0.05 for t in TEAMS}))
+    pa = frame(db)
+    params = DEFAULT_PARAMS.replace(sims=500, hr_milestones=(1,))
+    proj = build_projection(pa, remaining_games(), "2026-06-30", 2026, params)
+
+    players = simulate(proj).players
+    already = players[players["hr_to_date"] >= 1]
+    assert not already.empty
+    assert (already["p_1"] == 1.0).all()

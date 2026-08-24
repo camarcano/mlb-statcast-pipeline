@@ -1,5 +1,6 @@
 """Command line entry point."""
 
+import dataclasses
 import logging
 import sqlite3
 import sys
@@ -28,7 +29,12 @@ from hrproj.config import (
 from hrproj.data import latest_game_date, load_pa_frame, team_games_played
 from hrproj.model import build_projection
 from hrproj.refresh import refresh_statcast
-from hrproj.report import to_console, write_outputs
+from hrproj.report import (
+    players_to_console,
+    to_console,
+    write_outputs,
+    write_player_outputs,
+)
 from hrproj.simulate import simulate
 from hrproj.teams import fangraphs
 
@@ -100,6 +106,38 @@ def _refresh_window(db_path: Path, season: int, end_date: str, requested: Option
         return 0
     gap = (date.fromisoformat(end_date) - date.fromisoformat(latest)).days
     return max(2, gap + 1)
+
+
+def _do_refresh(
+    db_path: Path, season: int, as_of: Optional[str],
+    refresh_days: Optional[int], force_days: int,
+) -> None:
+    end_date = as_of or default_as_of()
+    days = _refresh_window(db_path, season, end_date, refresh_days)
+
+    if days <= 0:
+        click.echo(
+            f"No {season} data in {db_path} yet - skipping the refresh.\n"
+            f"Backfill the season first:\n"
+            f"  statcast backfill --start-date {season_opening_date(season)} --game-types R",
+            err=True,
+        )
+        return
+
+    click.echo(f"Refreshing {days} day(s) of Statcast data through {end_date} ...", err=True)
+    summary = refresh_statcast(
+        db_path,
+        end_date=end_date,
+        days_back=days,
+        force_days=force_days,
+        on_progress=lambda msg: click.echo(msg, err=True),
+    )
+    click.echo(
+        f"  {summary['inserted']:,} rows inserted, "
+        f"{len(summary['skipped'])} days already complete, "
+        f"{len(summary['failed'])} failed.",
+        err=True,
+    )
 
 
 def _load_pa(conn: sqlite3.Connection, season: int, as_of: str) -> pd.DataFrame:
@@ -180,32 +218,7 @@ def project(
     db_path = get_statcast_db()
 
     if refresh:
-        end_date = as_of or default_as_of()
-        days = _refresh_window(db_path, season, end_date, refresh_days)
-        if days <= 0:
-            click.echo(
-                f"No {season} data in {db_path} yet - skipping the refresh.\n"
-                f"Backfill the season first:\n"
-                f"  statcast backfill --start-date {season_opening_date(season)} --game-types R",
-                err=True,
-            )
-        else:
-            click.echo(
-                f"Refreshing {days} day(s) of Statcast data through {end_date} ...", err=True
-            )
-            summary = refresh_statcast(
-                db_path,
-                end_date=end_date,
-                days_back=days,
-                force_days=force_days,
-                on_progress=lambda msg: click.echo(msg, err=True),
-            )
-            click.echo(
-                f"  {summary['inserted']:,} rows inserted, "
-                f"{len(summary['skipped'])} days already complete, "
-                f"{len(summary['failed'])} failed.",
-                err=True,
-            )
+        _do_refresh(db_path, season, as_of, refresh_days, force_days)
 
     conn = _connect(db_path)
     try:
@@ -226,6 +239,68 @@ def project(
     if wanted:
         written = write_outputs(projection, result, get_out_dir(), wanted)
         for path in written:
+            click.echo(f"Wrote {path}", err=True)
+
+
+@cli.command()
+@click.option("--as-of", default=None, help="As-of date (default: yesterday)")
+@click.option("--season", default=None, type=int)
+@click.option("--sims", default=DEFAULT_PARAMS.sims, help="Monte Carlo iterations")
+@click.option("--seed", default=DEFAULT_PARAMS.seed, help="Random seed")
+@click.option("--refresh/--no-refresh", default=True, help="Fetch recent Statcast data first")
+@click.option("--refresh-days", default=None, type=int)
+@click.option("--force-days", default=2)
+@click.option("--schedule/--no-schedule", default=True)
+@click.option("--no-park", is_flag=True)
+@click.option("--no-opponent", is_flag=True)
+@click.option("--top", default=30, help="Hitters to print")
+@click.option("--milestone", default=40, help="Home run total to report the odds of")
+@click.option("--reach", default=0.0, type=float,
+              help="Print every hitter with at least this chance of the milestone, e.g. 0.05")
+@click.option("--format", "formats", default="", help="Also write files: json,csv,html")
+def leaders(
+    as_of, season, sims, seed, refresh, refresh_days, force_days, schedule,
+    no_park, no_opponent, top, milestone, reach, formats,
+) -> None:
+    """Project individual home run totals, with the odds of reaching a milestone."""
+    season = season or get_season()
+    db_path = get_statcast_db()
+
+    if refresh:
+        _do_refresh(db_path, season, as_of, refresh_days, force_days)
+
+    conn = _connect(db_path)
+    try:
+        resolved_as_of = _resolve_as_of(conn, season, as_of)
+        pa = _load_pa(conn, season, resolved_as_of)
+    finally:
+        conn.close()
+
+    remaining, source = _remaining_games(pa, season, resolved_as_of, schedule, timeout=30)
+
+    milestones = tuple(sorted({milestone, *DEFAULT_PARAMS.hr_milestones}))
+    params = _params_from_options(
+        sims, seed, no_park, no_opponent, None, None, None
+    ).replace(hr_milestones=milestones)
+
+    projection = build_projection(pa, remaining, resolved_as_of, season, params, source)
+    result = simulate(projection)
+
+    shown = result
+    if reach > 0:
+        # Show the hitters who clear the probability bar - not merely as many rows
+        # as there are such hitters, which would cut a long shot with good odds in
+        # favour of a higher projection with worse ones. The exported file still
+        # holds every hitter; the filter is a display choice.
+        kept = result.players[result.players[f"p_{milestone}"] >= reach]
+        shown = dataclasses.replace(result, players=kept.reset_index(drop=True))
+        top = max(len(kept), 1)
+
+    click.echo(players_to_console(projection, shown, top, milestones))
+
+    wanted = tuple(f.strip() for f in formats.split(",") if f.strip())
+    if wanted:
+        for path in write_player_outputs(projection, result, get_out_dir(), wanted):
             click.echo(f"Wrote {path}", err=True)
 
 

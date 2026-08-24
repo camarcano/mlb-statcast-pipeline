@@ -67,6 +67,143 @@ def to_console(projection: Projection, result: SimulationResult, top: int = 30) 
     return "\n".join(lines)
 
 
+PLAYER_COLUMNS = [
+    ("Hitter", "player_name", 22, "{}"),
+    ("Tm", "team_fg", 4, "{}"),
+    ("PA", "pa", 5, "{:.0f}"),
+    ("HR", "hr_to_date", 4, "{:.0f}"),
+    ("xHR", "xhr", 6, "{:.1f}"),
+    ("RoS", "expected_remaining", 5, "{:.1f}"),
+    ("Proj", "projected", 6, "{:.1f}"),
+    ("p10", "p10", 4, "{:.0f}"),
+    ("p90", "p90", 4, "{:.0f}"),
+]
+
+
+def players_to_console(
+    projection: Projection,
+    result: SimulationResult,
+    top: int = 25,
+    milestones: tuple = (40, 50),
+) -> str:
+    """Leaderboard of projected individual home run totals."""
+    if result.players.empty:
+        return "No player projections available."
+
+    df = result.players.copy()
+    df["team_fg"] = df["team"].map(fangraphs)
+    df = df.head(top)
+
+    columns = list(PLAYER_COLUMNS)
+    for milestone in milestones:
+        key = f"p_{milestone}"
+        if key in df.columns:
+            columns.append((f"{milestone}+", key, 6, "{:.1%}"))
+
+    header = "  ".join(
+        name.ljust(width) if key == "player_name" else name.rjust(width)
+        for name, key, width, _ in columns
+    )
+    lines = [
+        f"Projected individual home run totals - {projection.season}",
+        f"As of {projection.as_of} | {result.sims:,} simulations",
+        "",
+        header,
+        "-" * len(header),
+    ]
+
+    for _, row in df.iterrows():
+        cells = []
+        for _, key, width, fmt in columns:
+            text = fmt.format(row[key])
+            cells.append(text[:width].ljust(width) if key == "player_name" else text.rjust(width))
+        lines.append("  ".join(cells))
+
+    for milestone in milestones:
+        key = f"p_{milestone}"
+        if key not in result.players.columns:
+            continue
+        contenders = result.players[result.players[key] >= 0.01]
+        expected = result.players[key].sum()
+        lines.append(
+            f"\n{len(contenders)} hitters have at least a 1% chance of {milestone}+ "
+            f"home runs; {expected:.1f} are expected to get there."
+        )
+
+    return "\n".join(lines)
+
+
+def write_player_outputs(
+    projection: Projection,
+    result: SimulationResult,
+    out_dir: Path,
+    formats: tuple[str, ...] = ("csv",),
+) -> list[Path]:
+    if result.players.empty:
+        return []
+
+    out_dir.mkdir(parents=True, exist_ok=True)
+    df = result.players.copy()
+    df["team_fg"] = df["team"].map(fangraphs)
+    written: list[Path] = []
+
+    if "csv" in formats:
+        path = out_dir / f"hr_players_{projection.as_of}.csv"
+        df.to_csv(path, index=False)
+        written.append(path)
+
+    if "json" in formats:
+        path = out_dir / f"hr_players_{projection.as_of}.json"
+        path.write_text(json.dumps({
+            "as_of": projection.as_of,
+            "season": projection.season,
+            "sims": result.sims,
+            "players": df.to_dict(orient="records"),
+        }, indent=2, default=str))
+        written.append(path)
+
+    if "html" in formats:
+        path = out_dir / f"hr_players_{projection.as_of}.html"
+        path.write_text(_players_html(projection, result, df))
+        written.append(path)
+
+    return written
+
+
+def _players_html(projection: Projection, result: SimulationResult, df: pd.DataFrame) -> str:
+    milestone_cols = [c for c in df.columns if c.startswith("p_")]
+    display = df[[
+        "player_name", "team_fg", "pa", "hr_to_date", "xhr",
+        "expected_remaining", "projected", "p10", "p90", *milestone_cols,
+    ]].rename(columns={
+        "player_name": "Hitter", "team_fg": "Team", "pa": "PA",
+        "hr_to_date": "HR", "xhr": "xHR", "expected_remaining": "Rest",
+        "projected": "Projected", "p10": "p10", "p90": "p90",
+        **{c: f"{c[2:]}+ %" for c in milestone_cols},
+    })
+    for c in milestone_cols:
+        display[f"{c[2:]}+ %"] = (display[f"{c[2:]}+ %"] * 100).round(1)
+    table = display.round(1).to_html(index=False, border=0)
+
+    return f"""<!doctype html>
+<html><head><meta charset="utf-8">
+<title>Hitter HR projections - {projection.season}</title>
+<style>
+ body {{ font-family: system-ui, sans-serif; margin: 2rem; color: #16181d; }}
+ table {{ border-collapse: collapse; font-variant-numeric: tabular-nums; }}
+ th, td {{ padding: .35rem .7rem; text-align: right; border-bottom: 1px solid #dcdfe4; }}
+ th:first-child, td:first-child {{ text-align: left; font-weight: 600; }}
+ caption {{ text-align: left; padding-bottom: .75rem; color: #5b6270; }}
+</style></head>
+<body>
+<h1>Projected individual home run totals</h1>
+<p>{projection.season} regular season, as of {projection.as_of} &middot;
+{result.sims:,} simulations</p>
+{table}
+</body></html>
+"""
+
+
 def to_records(projection: Projection, result: SimulationResult) -> list[dict]:
     df = _decorate(result.totals)
     return df.to_dict(orient="records")

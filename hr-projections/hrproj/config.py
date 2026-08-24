@@ -110,6 +110,8 @@ class ModelParams:
     # as a multiplicative factor shared by all 30 clubs: it widens every interval
     # without moving the odds of one team out-homering another. Set to 0 to drop it.
     league_env_sd: float = 0.07
+    # Round-number seasons worth reporting the odds of.
+    hr_milestones: tuple = (40, 50)
 
     def replace(self, **kwargs) -> "ModelParams":
         return replace(self, **kwargs)
