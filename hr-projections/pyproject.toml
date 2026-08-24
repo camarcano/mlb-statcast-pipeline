@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mlb-hr-projections"
+version = "0.1.0"
+description = "Rest-of-season team home run projections from Statcast pitch-level data"
+requires-python = ">=3.10"
+dependencies = [
+    "mlb-statcast-pipeline @ git+https://github.com/camarcano/mlb-statcast-pipeline@main",
+    "pandas>=2.1",
+    "numpy>=1.26",
+    "requests>=2.31",
+    "click>=8.1",
+    "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+    "responses>=0.24",
+]
+
+[project.scripts]
+hrproj = "hrproj.cli:cli"
+
+[tool.setuptools.packages.find]
+include = ["hrproj*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
