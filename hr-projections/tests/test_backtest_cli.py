@@ -112,3 +112,36 @@ def test_project_reports_a_missing_database(monkeypatch, tmp_path):
     result = CliRunner().invoke(cli, ["project", "--no-refresh", "--no-schedule"])
     assert result.exit_code != 0
     assert "not found" in result.output
+
+
+def test_refresh_window_covers_everything_since_the_last_stored_game(season):
+    """Run it after a fortnight away and it should fetch the fortnight, not seven days."""
+    from hrproj.cli import _refresh_window
+
+    db, pa = season
+    latest = str(pa["game_date"].max().date())
+    end = str((pa["game_date"].max() + pd.Timedelta(days=14)).date())
+
+    assert _refresh_window(db, 2026, end, None) == 15
+    assert _refresh_window(db, 2026, latest, None) == 2      # never less than the forced window
+    assert _refresh_window(db, 2026, end, 3) == 3            # an explicit request still wins
+
+
+def test_refresh_window_is_zero_without_a_database(tmp_path):
+    from hrproj.cli import _refresh_window
+
+    assert _refresh_window(tmp_path / "missing.db", 2026, "2026-08-23", None) == 0
+
+
+def test_project_explains_how_to_backfill_an_empty_database(tmp_path, monkeypatch):
+    """Refreshing cannot rescue an empty database, so say what will."""
+    from savant.db import init_db
+
+    db = tmp_path / "empty.db"
+    init_db(db)
+    monkeypatch.setenv("HRPROJ_STATCAST_DB", str(db))
+    monkeypatch.setenv("HRPROJ_CACHE_DB", str(tmp_path / "cache.db"))
+
+    result = CliRunner().invoke(cli, ["project", "--no-schedule"])
+    assert result.exit_code != 0
+    assert "statcast backfill" in result.output

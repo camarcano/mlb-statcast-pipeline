@@ -3,6 +3,7 @@
 import logging
 import sqlite3
 import sys
+from datetime import date
 from pathlib import Path
 from typing import Optional
 
@@ -21,6 +22,7 @@ from hrproj.config import (
     get_season,
     get_statcast_db,
     season_end_date,
+    season_opening_date,
     season_start_date,
 )
 from hrproj.data import latest_game_date, load_pa_frame, team_games_played
@@ -73,6 +75,31 @@ def _resolve_as_of(conn: sqlite3.Connection, season: int, as_of: Optional[str]) 
         )
         return latest
     return wanted
+
+
+def _refresh_window(db_path: Path, season: int, end_date: str, requested: Optional[int]) -> int:
+    """How many days back to fetch.
+
+    A fixed window silently leaves a hole when the tool has not been run for a
+    while, which is the normal case for something you open once a week. Unless a
+    window is asked for explicitly, cover everything since the newest game in the
+    database.
+    """
+    if requested is not None:
+        return requested
+    if not db_path.exists():
+        return 0
+
+    conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+    try:
+        latest = latest_game_date(conn, season)
+    finally:
+        conn.close()
+
+    if not latest:
+        return 0
+    gap = (date.fromisoformat(end_date) - date.fromisoformat(latest)).days
+    return max(2, gap + 1)
 
 
 def _load_pa(conn: sqlite3.Connection, season: int, as_of: str) -> pd.DataFrame:
@@ -133,7 +160,8 @@ def cli(verbose: bool) -> None:
 @click.option("--sims", default=DEFAULT_PARAMS.sims, help="Monte Carlo iterations")
 @click.option("--seed", default=DEFAULT_PARAMS.seed, help="Random seed")
 @click.option("--refresh/--no-refresh", default=True, help="Fetch recent Statcast data first")
-@click.option("--refresh-days", default=7, help="Days back to refresh")
+@click.option("--refresh-days", default=None, type=int,
+              help="Days back to refresh (default: everything since the newest game stored)")
 @click.option("--force-days", default=2, help="Trailing days to re-fetch even if logged complete")
 @click.option("--schedule/--no-schedule", default=True, help="Use the MLB StatsAPI schedule")
 @click.option("--no-park", is_flag=True, help="Ignore park home run factors")
@@ -152,20 +180,32 @@ def project(
     db_path = get_statcast_db()
 
     if refresh:
-        click.echo(f"Refreshing Statcast data in {db_path} ...", err=True)
-        summary = refresh_statcast(
-            db_path,
-            end_date=as_of or default_as_of(),
-            days_back=refresh_days,
-            force_days=force_days,
-            on_progress=lambda msg: click.echo(msg, err=True),
-        )
-        click.echo(
-            f"  {summary['inserted']:,} rows inserted, "
-            f"{len(summary['skipped'])} days already complete, "
-            f"{len(summary['failed'])} failed.",
-            err=True,
-        )
+        end_date = as_of or default_as_of()
+        days = _refresh_window(db_path, season, end_date, refresh_days)
+        if days <= 0:
+            click.echo(
+                f"No {season} data in {db_path} yet - skipping the refresh.\n"
+                f"Backfill the season first:\n"
+                f"  statcast backfill --start-date {season_opening_date(season)} --game-types R",
+                err=True,
+            )
+        else:
+            click.echo(
+                f"Refreshing {days} day(s) of Statcast data through {end_date} ...", err=True
+            )
+            summary = refresh_statcast(
+                db_path,
+                end_date=end_date,
+                days_back=days,
+                force_days=force_days,
+                on_progress=lambda msg: click.echo(msg, err=True),
+            )
+            click.echo(
+                f"  {summary['inserted']:,} rows inserted, "
+                f"{len(summary['skipped'])} days already complete, "
+                f"{len(summary['failed'])} failed.",
+                err=True,
+            )
 
     conn = _connect(db_path)
     try:

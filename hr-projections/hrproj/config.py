@@ -15,7 +15,8 @@ from dotenv import load_dotenv
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(PROJECT_ROOT / ".env")
 
-# The 2026 regular season ends on this date (MLB StatsAPI).
+# Regular season bounds (MLB StatsAPI).
+SEASON_OPENING = {2026: "2026-03-25"}
 SEASON_END = {2026: "2026-09-27"}
 GAMES_PER_SEASON = 162
 
@@ -57,8 +58,15 @@ def season_end_date(season: Optional[int] = None) -> str:
 
 
 def season_start_date(season: Optional[int] = None) -> str:
+    """Lower bound for data queries - deliberately loose, unlike opening day."""
     season = season or get_season()
     return f"{season}-01-01"
+
+
+def season_opening_date(season: Optional[int] = None) -> str:
+    """Opening day, for a first backfill."""
+    season = season or get_season()
+    return SEASON_OPENING.get(season, f"{season}-03-20")
 
 
 @dataclass(frozen=True)

@@ -13,29 +13,64 @@ league leaders are separated by fewer home runs than a good week can produce.
 Data comes from [`mlb-statcast-pipeline`](https://github.com/camarcano/mlb-statcast-pipeline),
 which this project depends on and calls to keep its database current.
 
-## Install
+## Quick start on Windows
+
+1. **Download the code.** On the [repository page](https://github.com/camarcano/mlb-statcast-pipeline/tree/claude/mlb-homer-projection-wa3in1),
+   make sure the branch selector shows `claude/mlb-homer-projection-wa3in1`, then
+   **Code → Download ZIP**, and unzip it somewhere like `C:\baseball\`. With git
+   installed you can instead run:
+
+   ```
+   git clone -b claude/mlb-homer-projection-wa3in1 https://github.com/camarcano/mlb-statcast-pipeline.git
+   ```
+
+2. **Install Python 3.10 or newer** from [python.org/downloads](https://www.python.org/downloads/)
+   if you do not have it. Tick **"Add python.exe to PATH"** in the installer.
+
+3. **Double-click `setup.bat`** inside the `hr-projections` folder. It builds a
+   virtual environment, installs everything, and downloads the season from
+   Baseball Savant. This takes 15-20 minutes and happens once.
+
+4. **Double-click `run.bat`.** It fetches whatever days are new, projects, prints
+   the table, and opens the report in your browser.
+
+From then on, step 4 is the whole routine.
+
+To work in VS Code, open the **outer** folder (the one containing both `savant\`
+and `hr-projections\`) with **File → Open Folder**. VS Code finds the `.venv`
+that `setup.bat` created and offers it as the interpreter; the same
+`python tools\bootstrap.py run` works in its terminal.
+
+## Quick start on macOS and Linux
+
+Same idea, without the batch files:
 
 ```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -e .
+git clone -b claude/mlb-homer-projection-wa3in1 https://github.com/camarcano/mlb-statcast-pipeline.git
+cd mlb-statcast-pipeline/hr-projections
+python3 tools/bootstrap.py setup     # once, downloads the season
+python3 tools/bootstrap.py run       # whenever you want fresh numbers
 ```
 
-To develop against a local checkout of the pipeline instead of the pinned git
-dependency:
+## Keeping up with the season
+
+`run.bat` fetches **every day since the last one in your database**, so it does
+not matter whether you last ran it yesterday or three weeks ago - it catches up
+either way. It also re-fetches the most recent two days every time, because a day
+first pulled while games were in progress gets recorded as complete while still
+missing innings.
+
+Each run writes `out\hr_projection_<date>.html` and a matching `.csv`, so you can
+keep the files and watch the race move.
+
+## The command line, for more control
+
+The bootstrap script is a convenience wrapper. Once setup has run, the `hrproj`
+command is available in the virtual environment
+(`.venv\Scripts\hrproj.exe` on Windows, `.venv/bin/hrproj` elsewhere):
 
 ```bash
-pip install -e ../mlb-statcast-pipeline
-pip install -e . --no-deps
-pip install pandas numpy requests click python-dotenv
-```
-
-Copy `.env.example` to `.env` and point `HRPROJ_STATCAST_DB` at the pipeline's
-SQLite database. If it is left unset, the pipeline's own `SAVANT_DB_PATH` is used.
-
-## Use
-
-```bash
-hrproj project                      # refresh recent data, then project
+hrproj project                      # update data, then project
 hrproj project --no-refresh         # skip the fetch, use the database as-is
 hrproj project --format json,csv,html
 hrproj players NYY                  # the hitters behind one club's number
@@ -44,17 +79,9 @@ hrproj backtest --cutoff 2026-07-01 --sweep
 hrproj schedule-refresh             # re-cache the remaining schedule only
 ```
 
-`hrproj project` refreshes the last seven days of Statcast data before
-projecting, re-fetching the most recent two days regardless of what the fetch log
-says - a day first pulled while games were in progress is recorded as complete
-while still missing innings. Inserts are idempotent, so this costs nothing but
-the requests. Use `--no-refresh` to skip it, `--refresh-days N` to widen it.
-
-The database itself is built by the pipeline. For an empty one, start there:
-
-```bash
-statcast backfill --start-date 2026-03-25 --game-types R
-```
+By default the Statcast database lives at `data\savant.db` inside the checkout and
+nothing needs configuring. To keep it elsewhere, copy `.env.example` to `.env` and
+set `HRPROJ_STATCAST_DB`.
 
 ### Output
 
@@ -196,23 +223,30 @@ p10 and p90 are as far apart as they are.
 | `simulate.py` | Monte Carlo and finishing probabilities |
 | `backtest.py` | Out-of-sample scoring and the parameter sweep |
 | `report.py` | Console, CSV, JSON and HTML output |
+| `cli.py` | The `hrproj` commands |
+
+| Also | Role |
+| --- | --- |
+| `setup.bat` / `run.bat` | Double-clickable Windows entry points |
+| `tools/bootstrap.py` | What those call: venv, install, backfill, project. Standard library only, so it runs before anything is installed |
 
 ## Tests
 
 ```bash
-pip install -e .[dev]
-pytest
+.venv/bin/pip install -e "hr-projections[dev]"    # .venv\Scripts\pip on Windows
+.venv/bin/pytest hr-projections/tests
 ```
 
 Tests build synthetic Statcast databases through the pipeline's real schema and
 mock the StatsAPI, so no network access or season database is needed.
 
-## Moving this out of the pipeline repository
+## Where this lives
 
-This project was developed inside `mlb-statcast-pipeline` under
-`hr-projections/`. To lift it into its own repository with its history:
+Inside `mlb-statcast-pipeline`, under `hr-projections/`, on the branch
+`claude/mlb-homer-projection-wa3in1`. It sits here rather than in its own
+repository because it needs the pipeline anyway - one download gets you both the
+data collection and the projections, and `setup.bat` wires them together.
 
-```bash
-git subtree split -P hr-projections -b hrproj-only
-git push git@github.com:camarcano/mlb-hr-projections.git hrproj-only:main
-```
+Nothing in `savant/` or `webapp/` is modified by this project. It only reads the
+database the pipeline builds, and calls the pipeline's own fetch functions to keep
+that database current.
