@@ -146,3 +146,58 @@ def expected_hr_per_pa(pa: pd.DataFrame, grid: HRGrid) -> pd.Series:
             spray_bucket(sub["spray"]),
         )
     return pd.Series(out, index=pa.index)
+
+
+def league_hr_per_bbia(pa: pd.DataFrame) -> float:
+    """League home runs per 100+ mph air ball, over whatever window `pa` covers.
+
+    Recomputed rather than hardcoded: it moved from .483 to .531 across the 2026
+    season as the league's home run environment warmed up.
+    """
+    count = float(pa["is_bbia100"].sum())
+    if count <= 0:
+        return 0.0
+    return float(pa["is_hr"].sum()) / count
+
+
+def bbia_expected_hr(pa: pd.DataFrame, league_ratio: float) -> pd.Series:
+    """Expected home runs per plate appearance from hard air contact alone.
+
+    Every 100+ mph air ball is worth the league's home run rate on such contact,
+    and nothing else scores. Blunter than the grid - no spray, no credit for a
+    98 mph liner - but calibrated to the league total by construction, and a
+    better predictor of future home runs than past home runs are.
+    """
+    return pd.Series(
+        pa["is_bbia100"].to_numpy(dtype=float) * league_ratio, index=pa.index
+    )
+
+
+def blend_features(
+    grid_xhr: pd.Series, bbia_xhr: pd.Series, weight: float
+) -> pd.Series:
+    """Mix the two expected-home-run estimators. `weight` is the BBIA share."""
+    weight = float(np.clip(weight, 0.0, 1.0))
+    if weight == 0.0:
+        return grid_xhr
+    if weight == 1.0:
+        return bbia_xhr
+    return (1.0 - weight) * grid_xhr + weight * bbia_xhr
+
+
+def expected_hr_feature(pa: pd.DataFrame, params) -> pd.Series:
+    """The expected-home-run series the rate model consumes.
+
+    The grid on its own at `bbia_weight` 0, mixed with the 100+ mph air-ball
+    estimator above it. Both `build_projection` and `run_backtest` go through
+    here so a weight set on the parameters cannot be honoured by one and
+    silently ignored by the other.
+    """
+    grid = build_grid(pa[pa["is_bbe"]], params)
+    grid_xhr = expected_hr_per_pa(pa, grid)
+
+    if params.bbia_weight <= 0:
+        return grid_xhr
+
+    bbia = bbia_expected_hr(pa, league_hr_per_bbia(pa))
+    return blend_features(grid_xhr, bbia, params.bbia_weight)

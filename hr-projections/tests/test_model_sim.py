@@ -244,3 +244,84 @@ def test_a_hitter_who_has_already_cleared_the_bar_is_certain(tmp_path):
     already = players[players["hr_to_date"] >= 1]
     assert not already.empty
     assert (already["p_1"] == 1.0).all()
+
+
+def test_zero_bbia_weight_reproduces_the_base_projection(tmp_path):
+    """The alternate must differ from the base by the feature and nothing else."""
+    db = tmp_path / "league.db"
+    write_pitches(db, synth_league())
+    pa = frame(db)
+    games = remaining_games()
+    base = DEFAULT_PARAMS.replace(sims=300)
+
+    a = build_projection(pa, games, "2026-06-30", 2026, base)
+    b = build_projection(pa, games, "2026-06-30", 2026, base.replace(bbia_weight=0.0))
+
+    for team in TEAMS:
+        assert a.teams[team].point_rate == pytest.approx(b.teams[team].point_rate)
+    pd.testing.assert_frame_equal(simulate(a).totals, simulate(b).totals)
+
+
+def test_bbia_weight_changes_the_projection(tmp_path):
+    db = tmp_path / "league.db"
+    write_pitches(db, synth_league())
+    pa = frame(db)
+    games = remaining_games()
+    base = DEFAULT_PARAMS.replace(sims=300)
+
+    plain = build_projection(pa, games, "2026-06-30", 2026, base)
+    alt = build_projection(pa, games, "2026-06-30", 2026, base.replace(bbia_weight=0.75))
+
+    rates = [
+        (plain.teams[t].point_rate, alt.teams[t].point_rate) for t in TEAMS
+    ]
+    assert any(abs(p - a) > 1e-9 for p, a in rates)
+    # Normalisation still holds for the alternate: it is a reweighting, not an inflation.
+    weight = sum(ti.pa_per_game for ti in alt.teams.values())
+    aggregate = sum(ti.point_rate * ti.pa_per_game for ti in alt.teams.values()) / weight
+    assert aggregate == pytest.approx(alt.league_hr_per_pa, rel=1e-6)
+
+
+def test_hard_air_contact_drives_the_alternate(tmp_path):
+    """A club whose power shows up only as 100+ mph air balls should rank top on it."""
+    from tests.conftest import make_pitch, write_pitches as write
+
+    rows = synth_league(hr_talent={t: 0.02 for t in TEAMS})
+    # Give TOR a run of scorched fly outs - no extra home runs, just hard contact.
+    extra = []
+    for day in range(1, 29):
+        for slot in range(9):
+            extra.append(make_pitch(
+                game_date=f"2026-06-{day:02d}", game_pk=880000 + day,
+                home_team="TOR", away_team="TB", inning_topbot="Bot",
+                batter=100200 + slot, player_name=f"TOR, Hitter{slot}",
+                at_bat_number=500 + slot, pitch_number=1,
+                type="X", events="field_out",
+                launch_speed=106.0, launch_angle=30.0, hc_x=125.0, hc_y=100.0,
+            ))
+
+    db = tmp_path / "league.db"
+    write(db, rows + extra)
+    pa = frame(db)
+    games = remaining_games()
+    params = DEFAULT_PARAMS.replace(sims=300, bbia_weight=1.0)
+
+    alt = build_projection(pa, games, "2026-06-30", 2026, params)
+    best = max(TEAMS, key=lambda t: alt.teams[t].point_rate)
+    assert best == "TOR"
+    assert alt.teams["TOR"].bbia > alt.teams["TB"].bbia
+
+
+def test_bbia_counts_reach_the_tables(tmp_path):
+    db = tmp_path / "league.db"
+    write_pitches(db, synth_league())
+    pa = frame(db)
+    proj = build_projection(
+        pa, remaining_games(), "2026-06-30", 2026, DEFAULT_PARAMS.replace(sims=200)
+    )
+    result = simulate(proj)
+
+    assert all(proj.teams[t].bbia >= 0 for t in TEAMS)
+    assert sum(proj.teams[t].bbia for t in TEAMS) == int(pa["is_bbia100"].sum())
+    assert "bbia" in result.players.columns
+    assert (result.players["bbia"] >= 0).all()

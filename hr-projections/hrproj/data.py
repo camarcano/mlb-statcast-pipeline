@@ -12,6 +12,7 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
+from hrproj.config import BBIA_EV_MIN, BBIA_LA_MAX, BBIA_LA_MIN
 from hrproj.teams import BATTING_TEAM_SQL, NON_PA_EVENTS
 
 # Statcast's hit-coordinate origin (home plate) in the scoreboard coordinate system.
@@ -87,6 +88,13 @@ def load_pa_frame(
     df["is_air"] = (
         df["is_bbe"]
         & df["launch_angle"].between(AIR_LA_MIN, AIR_LA_MAX)
+    )
+    # Hard contact lifted into the home run band. A subset of is_bbe, so fouls
+    # and swings that never reached the field are excluded by construction.
+    df["is_bbia100"] = (
+        df["is_bbe"]
+        & (df["launch_speed"] >= BBIA_EV_MIN)
+        & df["launch_angle"].between(BBIA_LA_MIN, BBIA_LA_MAX)
     )
     df["spray"] = spray_angle(df["hc_x"], df["hc_y"], df["stand"])
     df["game_date"] = pd.to_datetime(df["game_date"])

@@ -32,6 +32,7 @@ class TeamInputs:
     context_sum: float           # sum over remaining games of park * opponent
     pa_per_game: float
     batters: pd.DataFrame        # batter, player_name, share, rate, alpha, beta, concentration
+    bbia: int = 0                # team 100+ mph air balls to date
 
     @property
     def point_rate(self) -> float:
@@ -80,8 +81,7 @@ def build_projection(
     warnings: list[str] = []
 
     if xhr_per_pa is None:
-        grid = xhr_mod.build_grid(pa[pa["is_bbe"]], params)
-        xhr_per_pa = xhr_mod.expected_hr_per_pa(pa, grid)
+        xhr_per_pa = xhr_mod.expected_hr_feature(pa, params)
 
     # The league anchor is the flat season-to-date rate, not a recency-weighted
     # one: the league's home run environment moves with the weather, and the
@@ -103,6 +103,8 @@ def build_projection(
 
     hr_to_date = team_hr_to_date(pa)
     games_played = team_games_played(pa)
+    team_bbia = pa.groupby("bat_team")["is_bbia100"].sum().astype(int)
+    batter_bbia = pa.groupby("batter")["is_bbia100"].sum().astype(int).rename("bbia")
 
     context = _context_by_team(remaining, parks, opps, params)
 
@@ -113,7 +115,8 @@ def build_projection(
             rate_df[["batter", "player_name", "rate", "alpha", "beta", "pa", "hr", "xhr"]],
             on="batter",
             how="left",
-        )
+        ).merge(batter_bbia, on="batter", how="left")
+        batters["bbia"] = batters["bbia"].fillna(0).astype(int)
         missing = batters["rate"].isna()
         if missing.any():
             batters.loc[missing, ["rate", "alpha", "beta"]] = [
@@ -137,6 +140,7 @@ def build_projection(
             context_sum=ctx_sum,
             pa_per_game=float(pa_per_game.get(team, 0.0)),
             batters=batters,
+            bbia=int(team_bbia.get(team, 0)),
         )
 
     scale = _league_scale(teams, league_mu) if params.league_normalize else 1.0

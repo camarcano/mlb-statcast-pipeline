@@ -76,6 +76,8 @@ hrproj project                      # update data, then project team totals
 hrproj project --no-refresh         # skip the fetch, use the database as-is
 hrproj project --format json,csv,html
 hrproj leaders                      # individual hitters, with 40+ and 50+ odds
+hrproj project --no-alt             # base projection only, narrower table
+hrproj project --bbia-weight 1.0    # alternate driven purely by 100+ mph air balls
 hrproj leaders --milestone 45 --reach 0.05   # everyone with a 5% shot at 45
 hrproj players NYY                  # the hitters behind one club's number
 hrproj backtest --cutoff 2026-07-01 # out-of-sample score vs simpler methods
@@ -99,7 +101,8 @@ Alvarez, Yordan          HOU    565    36    40.4    6.8    42.8    39    47   8
 
 `RoS` is expected home runs in the rest of the season and `Proj` the final total.
 `--milestone N` changes the bar; `--reach 0.05` prints everyone with at least a 5%
-chance of clearing it instead of a fixed number of rows.
+chance of clearing it instead of a fixed number of rows. `BBIA`, `ProjA` and the
+`+A` column come from the alternate projection described below.
 
 Player and team projections come out of the *same* simulation - a club's remaining
 home runs are its hitters' remaining home runs, drawn once - so the two tables can
@@ -118,6 +121,50 @@ WSN  183  30   40.2   223.2    210    237   28.4%  62.1%    1
 middle 80% of simulated final totals, and `Lead%` is the share of simulations in
 which that club finishes with the most home runs in baseball. Team abbreviations
 follow FanGraphs so the table lines up with published standings.
+
+## The alternate projection
+
+Both tables carry a second projection built on one countable event: a **batted ball
+in the air at 100+ mph** - put in play (so no fouls), launch angle between 18 and
+50 degrees, exit velocity at least 100. Fly outs count; the measure is contact, not
+outcome. The `BBIA` column is the season count, `ProjA` the resulting final total,
+and `LeadA%` / `40+A` the same odds recomputed from it.
+
+It enters as a second estimator of expected home runs, mixed with the grid:
+
+```
+xhr_bbia  = BBIA100 x (league HR / league BBIA100)
+feature   = (1 - psi) x grid_xHR  +  psi x xhr_bbia
+```
+
+with `psi = 0.75` by default (`--bbia-weight` to change it, `--no-alt` to skip the
+second pass). Everything downstream is identical to the base run, including the
+random seed, so the two columns differ by the feature and nothing else.
+
+**Is it any good?** On 2026 data, correlating first-half rates against second-half
+home run rate for 202 hitters with 150+ then 100+ plate appearances:
+
+| predictor | correlation with future HR/PA |
+| --- | --- |
+| xHR/PA (the grid) | 0.501 |
+| BBIA100/PA | 0.485 |
+| HR/PA (actual home runs) | 0.430 |
+
+A single count of hard air contact predicts future home runs better than past home
+runs do. It also improves the team backtest slightly and consistently - fit through
+July 1, MAE 7.35 to 7.27 and RMSE 8.65 to 8.57, monotone in the weight across three
+cutoffs.
+
+**But it mostly agrees with the grid**, which is expected: a 100 mph ball at 18-50
+degrees *is* the high-probability region the grid already finds, and 82.6% of 2026
+home runs were themselves BBIA100. Adding it to a regression alongside xHR moves R²
+from 0.251 to 0.252. In the live projection the largest team disagreement is 1.2
+home runs and the largest hitter disagreement 0.5. Treat `ProjA` as a robustness
+check - where it diverges, the base projection is leaning on spray angle or on
+contact below 100 mph.
+
+Note this definition uses 18 degrees; `webapp/hitter/calculations.py` has its own
+`bbia_100` at 15 degrees for a different purpose, and is untouched by this project.
 
 ## How the projection works
 
@@ -238,7 +285,7 @@ p10 and p90 are as far apart as they are.
 | `teams.py` | Team codes, FanGraphs display names, batting-team SQL |
 | `refresh.py` | Brings the Statcast database current via the pipeline's own functions |
 | `data.py` | Loads plate appearances and derives teams, contact flags, spray |
-| `xhr.py` | The EV x LA x spray home run grid |
+| `xhr.py` | The EV x LA x spray home run grid, and the 100+ mph air-ball estimator |
 | `rates.py` | Per-hitter blended, regressed rate and its Beta posterior |
 | `playing_time.py` | Team plate appearances per game and per-hitter shares |
 | `schedule.py` | StatsAPI remaining schedule, cache, offline fallback |

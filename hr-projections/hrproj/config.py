@@ -20,6 +20,19 @@ SEASON_OPENING = {2026: "2026-03-25"}
 SEASON_END = {2026: "2026-09-27"}
 GAMES_PER_SEASON = 162
 
+# A "batted ball in the air at 100+ mph": put in play (so no fouls), hit hard,
+# and lifted into the launch-angle band where home runs live. Fly outs count -
+# the point of the measure is contact quality, not the result.
+BBIA_EV_MIN = 100.0
+BBIA_LA_MIN = 18.0
+BBIA_LA_MAX = 50.0
+
+# Weight the alternate projection puts on the BBIA100 estimator. Chosen by
+# backtest across three cutoffs, where the optimum was flat between 0.75 and 1.0;
+# 0.75 was best at the most recent cutoff and keeps the grid's information about
+# spray and sub-100 mph contact.
+ALT_BBIA_WEIGHT = 0.75
+
 
 def get_season() -> int:
     return int(os.getenv("HRPROJ_SEASON", "2026"))
@@ -100,6 +113,11 @@ class ModelParams:
     ev_sigma: float = 1.5
     la_sigma: float = 2.5
     spray_min_n: float = 400.0     # per-cell weight below which spray detail is pooled away
+
+    # Share of expected home runs taken from the 100+ mph air-ball count rather
+    # than the EV/LA/spray grid. 0.0 is the base model; the alternate projection
+    # runs at ALT_BBIA_WEIGHT.
+    bbia_weight: float = 0.0
 
     # Simulation
     sims: int = 10000

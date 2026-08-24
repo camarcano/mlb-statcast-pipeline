@@ -66,8 +66,7 @@ def run_backtest(
         raise ValueError(f"No data on one side of the cutoff ({cutoff}).")
 
     if xhr_train is None:
-        grid = xhr_mod.build_grid(train[train["is_bbe"]], params)
-        xhr_train = xhr_mod.expected_hr_per_pa(train, grid)
+        xhr_train = xhr_mod.expected_hr_feature(train, params)
 
     remaining = schedule_from_played(test)
     projection = build_projection(
@@ -128,25 +127,37 @@ def sweep(
     half_lives: Iterable[float] = (25, 45, 75, 120),
     phis: Iterable[float] = (0.0, 0.3, 0.5, 0.6, 0.8, 1.0),
     ks: Iterable[float] = (80, 130, 170, 250, 400),
+    bbia_weights: Iterable[float] = (0.0,),
 ) -> pd.DataFrame:
-    """Grid over the rate constants. The xHR grid is fit once and reused throughout."""
+    """Grid over the rate constants.
+
+    The expensive pieces - the xHR grid and the BBIA100 estimator - are built once
+    per BBIA weight and reused across every other combination, since none of the
+    swept constants change them.
+    """
     cutoff_ts = pd.Timestamp(cutoff)
     train = pa[pa["game_date"] <= cutoff_ts]
     grid = xhr_mod.build_grid(train[train["is_bbe"]], base)
-    xhr_train = xhr_mod.expected_hr_per_pa(train, grid)
+    grid_xhr = xhr_mod.expected_hr_per_pa(train, grid)
+    bbia_xhr = xhr_mod.bbia_expected_hr(train, xhr_mod.league_hr_per_bbia(train))
 
     rows = []
-    for half_life, phi, k in product(half_lives, phis, ks):
-        params = base.replace(half_life_days=half_life, phi=phi, k_pa=k)
-        result = run_backtest(pa, cutoff, end, season, params, xhr_train=xhr_train)
-        model_score = result.scores[result.scores["method"] == "model"].iloc[0]
-        rows.append({
-            "half_life": half_life,
-            "phi": phi,
-            "k_pa": k,
-            "mae": model_score["mae"],
-            "rmse": model_score["rmse"],
-            "bias": model_score["bias"],
-        })
+    for weight in bbia_weights:
+        feature = xhr_mod.blend_features(grid_xhr, bbia_xhr, weight)
+        for half_life, phi, k in product(half_lives, phis, ks):
+            params = base.replace(
+                half_life_days=half_life, phi=phi, k_pa=k, bbia_weight=weight
+            )
+            result = run_backtest(pa, cutoff, end, season, params, xhr_train=feature)
+            model_score = result.scores[result.scores["method"] == "model"].iloc[0]
+            rows.append({
+                "half_life": half_life,
+                "phi": phi,
+                "k_pa": k,
+                "bbia": weight,
+                "mae": model_score["mae"],
+                "rmse": model_score["rmse"],
+                "bias": model_score["bias"],
+            })
 
     return pd.DataFrame(rows).sort_values("mae").reset_index(drop=True)

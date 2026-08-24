@@ -23,6 +23,27 @@ COLUMNS = [
     ("Rk", "current_rank", 3, "{:.0f}"),
 ]
 
+# Appended when an alternate projection is supplied. BBIA is the season count of
+# 100+ mph air balls, ProjA and LeadA% the alternate's view of the same race.
+TEAM_ALT_COLUMNS = [
+    ("BBIA", "bbia", 5, "{:.0f}"),
+    ("ProjA", "projected_alt", 6, "{:.1f}"),
+    ("LeadA%", "p_lead_alt", 7, "{:.1%}"),
+]
+
+
+def _attach_alternate(
+    base: pd.DataFrame,
+    alt: pd.DataFrame,
+    key: str,
+    columns: dict[str, str],
+) -> pd.DataFrame:
+    """Join an alternate run's columns onto the base table, suffixed `_alt`."""
+    if alt is None or alt.empty:
+        return base
+    wanted = alt[[key, *columns]].rename(columns=columns)
+    return base.merge(wanted, on=key, how="left")
+
 
 def _decorate(totals: pd.DataFrame) -> pd.DataFrame:
     df = totals.copy()
@@ -30,10 +51,27 @@ def _decorate(totals: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def to_console(projection: Projection, result: SimulationResult, top: int = 30) -> str:
-    df = _decorate(result.totals).head(top)
+def to_console(
+    projection: Projection,
+    result: SimulationResult,
+    top: int = 30,
+    alt: "SimulationResult | None" = None,
+) -> str:
+    df = _decorate(result.totals)
+    columns = list(COLUMNS)
 
-    header = "  ".join(name.rjust(width) for name, _, width, _ in COLUMNS)
+    if alt is not None:
+        df["bbia"] = df["team"].map(
+            {t: ti.bbia for t, ti in projection.teams.items()}
+        )
+        df = _attach_alternate(
+            df, alt.totals, "team",
+            {"projected": "projected_alt", "p_lead": "p_lead_alt"},
+        )
+        columns += TEAM_ALT_COLUMNS
+
+    df = df.head(top)
+    header = "  ".join(name.rjust(width) for name, _, width, _ in columns)
     lines = [
         f"Team home run projections - {projection.season} regular season",
         f"As of {projection.as_of} | {result.sims:,} simulations | "
@@ -45,7 +83,7 @@ def to_console(projection: Projection, result: SimulationResult, top: int = 30) 
 
     for _, row in df.iterrows():
         cells = []
-        for _, key, width, fmt in COLUMNS:
+        for _, key, width, fmt in columns:
             value = row[key]
             cells.append(fmt.format(value).rjust(width))
         lines.append("  ".join(cells))
@@ -61,6 +99,13 @@ def to_console(projection: Projection, result: SimulationResult, top: int = 30) 
         "Rk = current rank.",
     ]
 
+    if alt is not None:
+        weight = alt.totals.attrs.get("bbia_weight", projection.params.bbia_weight)
+        lines.append(
+            f"BBIA = batted balls in the air (18-50 deg) at 100+ mph; ProjA and "
+            f"LeadA% are the alternate projection built on them (weight {weight:g})."
+        )
+
     for warning in projection.warnings:
         lines.append(f"WARNING: {warning}")
 
@@ -73,6 +118,7 @@ PLAYER_COLUMNS = [
     ("PA", "pa", 5, "{:.0f}"),
     ("HR", "hr_to_date", 4, "{:.0f}"),
     ("xHR", "xhr", 6, "{:.1f}"),
+    ("BBIA", "bbia", 5, "{:.0f}"),
     ("RoS", "expected_remaining", 5, "{:.1f}"),
     ("Proj", "projected", 6, "{:.1f}"),
     ("p10", "p10", 4, "{:.0f}"),
@@ -85,6 +131,8 @@ def players_to_console(
     result: SimulationResult,
     top: int = 25,
     milestones: tuple = (40, 50),
+    alt: "SimulationResult | None" = None,
+    alt_milestone: "int | None" = None,
 ) -> str:
     """Leaderboard of projected individual home run totals."""
     if result.players.empty:
@@ -92,13 +140,25 @@ def players_to_console(
 
     df = result.players.copy()
     df["team_fg"] = df["team"].map(fangraphs)
-    df = df.head(top)
 
     columns = list(PLAYER_COLUMNS)
     for milestone in milestones:
         key = f"p_{milestone}"
         if key in df.columns:
             columns.append((f"{milestone}+", key, 6, "{:.1%}"))
+
+    if alt is not None and not alt.players.empty:
+        # One alternate milestone only - the table is wide enough already.
+        target = alt_milestone if alt_milestone is not None else milestones[0]
+        mapping = {"projected": "projected_alt"}
+        if f"p_{target}" in alt.players.columns:
+            mapping[f"p_{target}"] = "p_alt_milestone"
+        df = _attach_alternate(df, alt.players, "batter", mapping)
+        columns.append(("ProjA", "projected_alt", 6, "{:.1f}"))
+        if "p_alt_milestone" in df.columns:
+            columns.append((f"{target}+A", "p_alt_milestone", 7, "{:.1%}"))
+
+    df = df.head(top)
 
     header = "  ".join(
         name.ljust(width) if key == "player_name" else name.rjust(width)
@@ -125,9 +185,18 @@ def players_to_console(
             continue
         contenders = result.players[result.players[key] >= 0.01]
         expected = result.players[key].sum()
-        lines.append(
+        line = (
             f"\n{len(contenders)} hitters have at least a 1% chance of {milestone}+ "
             f"home runs; {expected:.1f} are expected to get there."
+        )
+        if alt is not None and key in alt.players.columns:
+            line += f" The alternate expects {alt.players[key].sum():.1f}."
+        lines.append(line)
+
+    if alt is not None:
+        lines.append(
+            "BBIA = batted balls in the air (18-50 deg) at 100+ mph; ProjA is the "
+            "alternate projection built on them."
         )
 
     return "\n".join(lines)
@@ -138,6 +207,7 @@ def write_player_outputs(
     result: SimulationResult,
     out_dir: Path,
     formats: tuple[str, ...] = ("csv",),
+    alt: "SimulationResult | None" = None,
 ) -> list[Path]:
     if result.players.empty:
         return []
@@ -145,6 +215,13 @@ def write_player_outputs(
     out_dir.mkdir(parents=True, exist_ok=True)
     df = result.players.copy()
     df["team_fg"] = df["team"].map(fangraphs)
+
+    if alt is not None and not alt.players.empty:
+        alt_cols = {"projected": "projected_alt"}
+        alt_cols.update({
+            c: f"{c}_alt" for c in alt.players.columns if c.startswith("p_")
+        })
+        df = _attach_alternate(df, alt.players, "batter", alt_cols)
     written: list[Path] = []
 
     if "csv" in formats:
@@ -214,11 +291,20 @@ def write_outputs(
     result: SimulationResult,
     out_dir: Path,
     formats: tuple[str, ...] = ("json", "csv"),
+    alt: "SimulationResult | None" = None,
 ) -> list[Path]:
     out_dir.mkdir(parents=True, exist_ok=True)
     stamp = projection.as_of
     written: list[Path] = []
     df = _decorate(result.totals)
+
+    if alt is not None:
+        df["bbia"] = df["team"].map({t: ti.bbia for t, ti in projection.teams.items()})
+        df = _attach_alternate(
+            df, alt.totals, "team",
+            {"projected": "projected_alt", "p_lead": "p_lead_alt",
+             "p_top3": "p_top3_alt", "expected_remaining": "expected_remaining_alt"},
+        )
 
     if "csv" in formats:
         path = out_dir / f"hr_projection_{stamp}.csv"

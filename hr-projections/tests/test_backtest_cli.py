@@ -205,3 +205,89 @@ def test_leaders_reach_filters_by_probability_not_row_count(season, monkeypatch,
         if line and line[0].isalpha() and line.rstrip().endswith("%")
     ]
     assert len(printed_rows) == len(qualifying)
+
+
+def test_project_shows_base_and_alternate_columns(season, monkeypatch, tmp_path):
+    db, _ = season
+    monkeypatch.setenv("HRPROJ_STATCAST_DB", str(db))
+    monkeypatch.setenv("HRPROJ_CACHE_DB", str(tmp_path / "cache.db"))
+    monkeypatch.setenv("HRPROJ_OUT_DIR", str(tmp_path / "out"))
+
+    result = CliRunner().invoke(cli, [
+        "project", "--no-refresh", "--no-schedule", "--as-of", "2026-06-01",
+        "--sims", "200", "--format", "csv",
+    ])
+    assert result.exit_code == 0, result.output
+    for column in ("BBIA", "ProjA", "LeadA%", "Proj", "Lead%"):
+        assert column in result.output
+
+    written = pd.read_csv(tmp_path / "out" / "hr_projection_2026-06-01.csv")
+    assert {"bbia", "projected", "projected_alt", "p_lead_alt"} <= set(written.columns)
+    assert (written["bbia"] >= 0).all()
+
+
+def test_leaders_shows_base_and_alternate_columns(season, monkeypatch, tmp_path):
+    db, _ = season
+    monkeypatch.setenv("HRPROJ_STATCAST_DB", str(db))
+    monkeypatch.setenv("HRPROJ_CACHE_DB", str(tmp_path / "cache.db"))
+    monkeypatch.setenv("HRPROJ_OUT_DIR", str(tmp_path / "out"))
+
+    result = CliRunner().invoke(cli, [
+        "leaders", "--no-refresh", "--no-schedule", "--as-of", "2026-06-01",
+        "--sims", "200", "--milestone", "20", "--top", "5", "--format", "csv",
+    ])
+    assert result.exit_code == 0, result.output
+    for column in ("BBIA", "ProjA", "20+A"):
+        assert column in result.output
+
+    written = pd.read_csv(tmp_path / "out" / "hr_players_2026-06-01.csv")
+    assert {"bbia", "projected", "projected_alt", "p_20_alt"} <= set(written.columns)
+
+
+def test_no_alt_restores_the_original_table(season, monkeypatch, tmp_path):
+    db, _ = season
+    monkeypatch.setenv("HRPROJ_STATCAST_DB", str(db))
+    monkeypatch.setenv("HRPROJ_CACHE_DB", str(tmp_path / "cache.db"))
+
+    result = CliRunner().invoke(cli, [
+        "project", "--no-refresh", "--no-schedule", "--as-of", "2026-06-01",
+        "--sims", "200", "--no-alt",
+    ])
+    assert result.exit_code == 0, result.output
+    assert "Proj" in result.output
+    assert "ProjA" not in result.output
+    assert "BBIA" not in result.output
+
+
+def test_the_alternate_leaves_the_base_columns_untouched(season, monkeypatch, tmp_path):
+    """Adding the alternate must not perturb the numbers it sits beside."""
+    db, _ = season
+    monkeypatch.setenv("HRPROJ_STATCAST_DB", str(db))
+    monkeypatch.setenv("HRPROJ_CACHE_DB", str(tmp_path / "cache.db"))
+    monkeypatch.setenv("HRPROJ_OUT_DIR", str(tmp_path / "out"))
+
+    args = ["project", "--no-refresh", "--no-schedule", "--as-of", "2026-06-01",
+            "--sims", "200", "--format", "csv"]
+    assert CliRunner().invoke(cli, args + ["--no-alt"]).exit_code == 0
+    without = pd.read_csv(tmp_path / "out" / "hr_projection_2026-06-01.csv")
+    assert CliRunner().invoke(cli, args).exit_code == 0
+    with_alt = pd.read_csv(tmp_path / "out" / "hr_projection_2026-06-01.csv")
+
+    shared = ["team", "hr_to_date", "projected", "p10", "p90", "p_lead", "p_top3"]
+    pd.testing.assert_frame_equal(without[shared], with_alt[shared])
+
+
+def test_backtest_honours_the_bbia_weight(season):
+    """The weight must reach the model, not be quietly dropped by the backtest."""
+    from hrproj.backtest import run_backtest
+
+    _, pa = season
+    cutoff = str(pa["game_date"].quantile(0.6).date())
+    end = str(pa["game_date"].max().date())
+
+    base = run_backtest(pa, cutoff, end, 2026, DEFAULT_PARAMS)
+    alt = run_backtest(pa, cutoff, end, 2026, DEFAULT_PARAMS.replace(bbia_weight=1.0))
+
+    base_mae = base.scores.set_index("method").loc["model", "mae"]
+    alt_mae = alt.scores.set_index("method").loc["model", "mae"]
+    assert base_mae != alt_mae

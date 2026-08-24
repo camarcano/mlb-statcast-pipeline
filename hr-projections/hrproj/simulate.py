@@ -126,6 +126,7 @@ def _summarise_players(
         "player_name": ti.batters["player_name"].to_numpy(),
         "hr_to_date": hr_to_date.astype(int),
         "pa": ti.batters["pa"].fillna(0).to_numpy(),
+        "bbia": ti.batters["bbia"].fillna(0).to_numpy(),
         "xhr": ti.batters["xhr"].fillna(0).to_numpy(),
         "rate": ti.batters["rate"].to_numpy(),
         "games_remaining": ti.games_remaining,

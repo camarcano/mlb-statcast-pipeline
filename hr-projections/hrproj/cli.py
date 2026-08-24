@@ -14,6 +14,7 @@ import pandas as pd
 from hrproj import __version__, schedule as schedule_mod
 from hrproj.backtest import run_backtest, sweep
 from hrproj.config import (
+    ALT_BBIA_WEIGHT,
     DEFAULT_PARAMS,
     GAMES_PER_SEASON,
     ModelParams,
@@ -140,6 +141,28 @@ def _do_refresh(
     )
 
 
+def _alternate(
+    pa: pd.DataFrame,
+    remaining: list[dict],
+    as_of: str,
+    season: int,
+    params: ModelParams,
+    source: str,
+    weight: float,
+):
+    """Refit and re-simulate with the BBIA100 feature mixed in.
+
+    Everything except the expected-home-run estimator is identical to the base
+    run, including the random seed, so differences between the two tables come
+    from the feature and nothing else.
+    """
+    alt_params = params.replace(bbia_weight=weight)
+    alt_projection = build_projection(pa, remaining, as_of, season, alt_params, source)
+    alt_result = simulate(alt_projection)
+    alt_result.totals.attrs["bbia_weight"] = weight
+    return alt_projection, alt_result
+
+
 def _load_pa(conn: sqlite3.Connection, season: int, as_of: str) -> pd.DataFrame:
     pa = load_pa_frame(conn, season, season_start_date(season), as_of)
     if pa.empty:
@@ -208,10 +231,14 @@ def cli(verbose: bool) -> None:
 @click.option("--phi", default=None, type=float, help="Override xHR weight in the blend")
 @click.option("--k-pa", default=None, type=float, help="Override regression strength (PA)")
 @click.option("--top", default=30, help="Rows to print")
+@click.option("--alt/--no-alt", default=True,
+              help="Also project using 100+ mph air balls (on by default)")
+@click.option("--bbia-weight", default=ALT_BBIA_WEIGHT, type=float,
+              help="Weight the alternate puts on the 100+ mph air-ball count")
 @click.option("--format", "formats", default="", help="Also write files: json,csv,html")
 def project(
     as_of, season, sims, seed, refresh, refresh_days, force_days, schedule,
-    no_park, no_opponent, half_life, phi, k_pa, top, formats,
+    no_park, no_opponent, half_life, phi, k_pa, top, alt, bbia_weight, formats,
 ) -> None:
     """Project final home run totals for all 30 teams."""
     season = season or get_season()
@@ -233,11 +260,17 @@ def project(
     projection = build_projection(pa, remaining, resolved_as_of, season, params, source)
     result = simulate(projection)
 
-    click.echo(to_console(projection, result, top))
+    alt_result = None
+    if alt and bbia_weight > 0:
+        _, alt_result = _alternate(
+            pa, remaining, resolved_as_of, season, params, source, bbia_weight
+        )
+
+    click.echo(to_console(projection, result, top, alt_result))
 
     wanted = tuple(f.strip() for f in formats.split(",") if f.strip())
     if wanted:
-        written = write_outputs(projection, result, get_out_dir(), wanted)
+        written = write_outputs(projection, result, get_out_dir(), wanted, alt_result)
         for path in written:
             click.echo(f"Wrote {path}", err=True)
 
@@ -257,10 +290,14 @@ def project(
 @click.option("--milestone", default=40, help="Home run total to report the odds of")
 @click.option("--reach", default=0.0, type=float,
               help="Print every hitter with at least this chance of the milestone, e.g. 0.05")
+@click.option("--alt/--no-alt", default=True,
+              help="Also project using 100+ mph air balls (on by default)")
+@click.option("--bbia-weight", default=ALT_BBIA_WEIGHT, type=float,
+              help="Weight the alternate puts on the 100+ mph air-ball count")
 @click.option("--format", "formats", default="", help="Also write files: json,csv,html")
 def leaders(
     as_of, season, sims, seed, refresh, refresh_days, force_days, schedule,
-    no_park, no_opponent, top, milestone, reach, formats,
+    no_park, no_opponent, top, milestone, reach, alt, bbia_weight, formats,
 ) -> None:
     """Project individual home run totals, with the odds of reaching a milestone."""
     season = season or get_season()
@@ -286,6 +323,12 @@ def leaders(
     projection = build_projection(pa, remaining, resolved_as_of, season, params, source)
     result = simulate(projection)
 
+    alt_result = None
+    if alt and bbia_weight > 0:
+        _, alt_result = _alternate(
+            pa, remaining, resolved_as_of, season, params, source, bbia_weight
+        )
+
     shown = result
     if reach > 0:
         # Show the hitters who clear the probability bar - not merely as many rows
@@ -296,11 +339,15 @@ def leaders(
         shown = dataclasses.replace(result, players=kept.reset_index(drop=True))
         top = max(len(kept), 1)
 
-    click.echo(players_to_console(projection, shown, top, milestones))
+    click.echo(
+        players_to_console(projection, shown, top, milestones, alt_result, milestone)
+    )
 
     wanted = tuple(f.strip() for f in formats.split(",") if f.strip())
     if wanted:
-        for path in write_player_outputs(projection, result, get_out_dir(), wanted):
+        for path in write_player_outputs(
+            projection, result, get_out_dir(), wanted, alt_result
+        ):
             click.echo(f"Wrote {path}", err=True)
 
 
@@ -362,9 +409,11 @@ def players(team, as_of, season, top, no_park, no_opponent) -> None:
 @click.option("--end", default=None, help="Score against games through this date")
 @click.option("--season", default=None, type=int)
 @click.option("--sweep", "do_sweep", is_flag=True, help="Grid-search the rate constants")
+@click.option("--bbia-weight", default=None, type=float,
+              help="Score the model with this much weight on 100+ mph air balls")
 @click.option("--no-park", is_flag=True)
 @click.option("--no-opponent", is_flag=True)
-def backtest(cutoff, end, season, do_sweep, no_park, no_opponent) -> None:
+def backtest(cutoff, end, season, do_sweep, bbia_weight, no_park, no_opponent) -> None:
     """Score the model out of sample against simpler alternatives."""
     season = season or get_season()
     conn = _connect(get_statcast_db())
@@ -377,20 +426,27 @@ def backtest(cutoff, end, season, do_sweep, no_park, no_opponent) -> None:
     params = _params_from_options(
         DEFAULT_PARAMS.sims, DEFAULT_PARAMS.seed, no_park, no_opponent, None, None, None
     )
+    if bbia_weight is not None:
+        params = params.replace(bbia_weight=bbia_weight)
 
     if do_sweep:
-        table = sweep(pa, cutoff, resolved_end, season, params)
+        table = sweep(
+            pa, cutoff, resolved_end, season, params,
+            bbia_weights=(0.0, 0.5, 0.75, 1.0),
+        )
         click.echo(f"Parameter sweep, fit through {cutoff}, scored through {resolved_end}")
         click.echo(table.head(15).to_string(index=False, float_format=lambda v: f"{v:.3f}"))
         best = table.iloc[0]
         click.echo(
             f"\nBest: half_life={best['half_life']:.0f} phi={best['phi']:.2f} "
-            f"k_pa={best['k_pa']:.0f} (MAE {best['mae']:.2f})"
+            f"k_pa={best['k_pa']:.0f} bbia={best['bbia']:.2f} (MAE {best['mae']:.2f})"
         )
         return
 
     result = run_backtest(pa, cutoff, resolved_end, season, params)
     click.echo(f"Backtest: fit through {cutoff}, scored on games through {resolved_end}")
+    if params.bbia_weight:
+        click.echo(f"BBIA100 weight: {params.bbia_weight:g}")
     click.echo(
         f"{result.per_team['games'].sum()} team-games, "
         f"{result.per_team['actual'].sum():.0f} home runs hit\n"

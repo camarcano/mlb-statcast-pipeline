@@ -105,3 +105,43 @@ def test_team_aggregates(league_db):
     assert set(games.index) == {"NYY", "BOS", "TOR", "TB"}
     assert (games == 36).all()          # 3 opponents x 12 games
     assert hrs.sum() == pa["is_hr"].sum()
+
+
+def test_bbia100_boundaries(tmp_path):
+    """100+ mph, 18-50 degrees, in play. Fouls never count; fly outs do."""
+    db = tmp_path / "t.db"
+    write_pitches(db, [
+        # (at_bat_number, type, events, EV, LA, expected)
+        make_pitch(at_bat_number=1, type="X", events="field_out",
+                   launch_speed=105.0, launch_angle=17.9),   # too flat
+        make_pitch(at_bat_number=2, type="X", events="field_out",
+                   launch_speed=105.0, launch_angle=18.0),   # on the lower edge
+        make_pitch(at_bat_number=3, type="X", events="home_run",
+                   launch_speed=105.0, launch_angle=50.0),   # on the upper edge
+        make_pitch(at_bat_number=4, type="X", events="field_out",
+                   launch_speed=105.0, launch_angle=50.1),   # too steep
+        make_pitch(at_bat_number=5, type="X", events="field_out",
+                   launch_speed=99.9, launch_angle=28.0),    # not hard enough
+        make_pitch(at_bat_number=6, type="X", events="field_out",
+                   launch_speed=100.0, launch_angle=28.0),   # exactly hard enough
+        make_pitch(at_bat_number=7, type="S", events="strikeout",
+                   launch_speed=110.0, launch_angle=25.0),   # a foul, not in play
+    ])
+    pa = read(db).sort_values("at_bat_number")
+    assert list(pa["is_bbia100"]) == [False, True, True, False, False, True, False]
+
+
+def test_a_fly_out_counts_as_hard_air_contact(tmp_path):
+    """The measure is contact quality, so the fielder catching it is irrelevant."""
+    db = tmp_path / "t.db"
+    write_pitches(db, [
+        make_pitch(at_bat_number=1, type="X", events="field_out",
+                   launch_speed=104.0, launch_angle=30.0),
+        make_pitch(at_bat_number=2, type="X", events="sac_fly",
+                   launch_speed=101.0, launch_angle=35.0),
+        make_pitch(at_bat_number=3, type="X", events="double",
+                   launch_speed=103.0, launch_angle=22.0),
+    ])
+    pa = read(db)
+    assert pa["is_bbia100"].all()
+    assert pa["is_hr"].sum() == 0

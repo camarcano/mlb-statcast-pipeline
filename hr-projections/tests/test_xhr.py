@@ -84,3 +84,46 @@ def test_expected_hr_is_zero_for_balls_not_in_play(grid):
     xhr = expected_hr_per_pa(pa, grid)
     assert xhr.iloc[0] == 0.0
     assert xhr.iloc[1] > 0.3
+
+
+def bbia_frame(n_bbia=100, n_other=900, hr=53):
+    """A synthetic league: `n_bbia` hard air balls, `hr` of which left the yard."""
+    rows = []
+    for i in range(n_bbia):
+        rows.append({"is_bbia100": True, "is_hr": 1.0 if i < hr else 0.0})
+    for _ in range(n_other):
+        rows.append({"is_bbia100": False, "is_hr": 0.0})
+    return pd.DataFrame(rows)
+
+
+def test_league_ratio_is_home_runs_per_hard_air_ball():
+    from hrproj.xhr import league_hr_per_bbia
+
+    assert league_hr_per_bbia(bbia_frame()) == pytest.approx(0.53)
+    empty = pd.DataFrame({"is_bbia100": [False], "is_hr": [0.0]})
+    assert league_hr_per_bbia(empty) == 0.0        # no divide by zero
+
+
+def test_bbia_estimator_is_calibrated_to_the_league_total():
+    """Scored at the league ratio, expected home runs equal the ones actually hit."""
+    from hrproj.xhr import bbia_expected_hr, league_hr_per_bbia
+
+    league = bbia_frame()
+    estimate = bbia_expected_hr(league, league_hr_per_bbia(league))
+    assert estimate.sum() == pytest.approx(league["is_hr"].sum())
+    # Nothing is credited to contact that was not hard and in the air.
+    assert estimate[~league["is_bbia100"]].eq(0).all()
+
+
+def test_blend_features_endpoints_and_middle():
+    from hrproj.xhr import blend_features
+
+    a = pd.Series([1.0, 2.0, 3.0])
+    b = pd.Series([0.0, 0.0, 6.0])
+
+    pd.testing.assert_series_equal(blend_features(a, b, 0.0), a)
+    pd.testing.assert_series_equal(blend_features(a, b, 1.0), b)
+    assert blend_features(a, b, 0.5).tolist() == [0.5, 1.0, 4.5]
+    # Out-of-range weights are clamped rather than extrapolated.
+    pd.testing.assert_series_equal(blend_features(a, b, -1.0), a)
+    pd.testing.assert_series_equal(blend_features(a, b, 5.0), b)
